@@ -54,3 +54,48 @@ function mainAction() { restartGame(); }
 function exitGame() { window.close(); }
 document.addEventListener("keydown",e => { if (["ArrowLeft","ArrowRight","ArrowUp"," "].includes(e.key)) e.preventDefault(); keys[e.key]=true; });
 document.addEventListener("keyup",e => { keys[e.key]=false; });
+const coinSound = document.getElementById("coinSound");
+const jumpSound = document.getElementById("jumpSound");
+const winSound = document.getElementById("winSound");
+const loseSound = document.getElementById("loseSound");
+const coinImage = image("coinGold.png");
+const treeImage = image("item/cactus.png");
+const flagImage = image("item/flagYellow.png");
+let highScore = Number(localStorage.getItem("platformerHighScore")) || 0;
+let statusText = "";
+let statusFrames = 0;
+function touches(item) { return player.x<item.x+item.width&&player.x+player.width>item.x&&player.y<item.y+item.height&&player.y+player.height>item.y; }
+function showStatus(text) { statusText=text; statusFrames=90; }
+function saveHighScore() { if (score>highScore) { highScore=score; localStorage.setItem("platformerHighScore",highScore); } }
+function collectedCoinCount() { return coins.filter(c=>c.collected).length; }
+coins = [
+  { x:100, y:360, width:20, height:20, collected:false },
+  { x:200, y:360, width:20, height:20, collected:false },
+  { x:500, y:220, width:20, height:20, collected:false }
+];
+drawObstacle = () => ctx.drawImage(treeImage,obstacle.x,obstacle.y,obstacle.width,obstacle.height);
+drawCoins = () => coins.forEach(c => { if (!c.collected) ctx.drawImage(coinImage,c.x,c.y,c.width,c.height); });
+drawGoal = () => ctx.drawImage(flagImage,goal.x,goal.y,goal.width,goal.height);
+updateCollections = () => coins.forEach(c => {
+  if (!c.collected&&touches(c)) { c.collected=true; score+=10; coinSound.currentTime=0; coinSound.play(); }
+});
+updateGoal = () => {
+  if (!touches(goal)) return;
+  isGameRunning=false; score+=25; saveHighScore(); winSound.currentTime=0; winSound.play();
+  document.getElementById("game-over-message").innerText="You Win!";
+  document.getElementById("mainActionBtn").innerText="Restart";
+  document.getElementById("game-over-screen").classList.remove("hidden");
+};
+drawHud = () => {
+  ctx.fillStyle="black"; ctx.font="20px Arial";
+  ctx.fillText("Score: "+score,10,20);
+  ctx.fillText("High Score: "+highScore,10,40);
+  ctx.fillText("Coins: "+collectedCoinCount()+"/"+coins.length,10,60);
+  if (statusFrames>0) { ctx.font="18px Arial"; ctx.textAlign="center"; ctx.fillText(statusText,canvas.width/2,35); ctx.textAlign="left"; statusFrames--; }
+};
+const oldMovePlayer = movePlayer;
+movePlayer = function() {
+  const wasGrounded=player.grounded; oldMovePlayer();
+  if ((keys.ArrowUp||keys[" "])&&wasGrounded&&player.dy<0) { jumpSound.currentTime=0; jumpSound.play(); }
+};
+function loseLife() { lives--; loseSound.currentTime=0; loseSound.play(); if (lives<=0) { isGameRunning=false; document.getElementById("game-over-message").innerText="Game Over!"; document.getElementById("mainActionBtn").innerText="Restart"; document.getElementById("game-over-screen").classList.remove("hidden"); saveHighScore(); return; } resetPlayer(); player.invulnerable=90; showStatus("Lives left: "+lives); }
