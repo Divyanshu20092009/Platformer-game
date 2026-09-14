@@ -142,3 +142,43 @@ startGame = function() {
   cancelAnimationFrame(frameId); gameLoop();
 };
 restartGame = function() { score=0; lives=3; gamePaused=false; document.getElementById("pause-screen").classList.add("hidden"); loadLevel(0); document.getElementById("game-over-screen").classList.add("hidden"); isGameRunning=true; cancelAnimationFrame(frameId); gameLoop(); };
+levels.push({
+  name:"Broken Bridge", par:50, start:{x:40,y:320},
+  platforms:[P(0,400,180),P(230,360,120),P(400,315,130),P(590,355,110),P(760,300,190),P(610,210,120),P(410,165,120),P(210,115,130)],
+  enemies:[E(250,330,1.6,230,350,"snail"),E(800,270,2.1,760,950,"slime"),{x:560,y:120,width:30,height:30,dy:1.3,minY:90,maxY:220,type:"fly",axis:"y"}],
+  obstacle:P(650,315,30,40), checkpoint:{x:430,y:125,width:24,height:40,spawnX:420,spawnY:85},
+  coins:[C(90,350),C(270,320),C(445,275),C(615,315),C(805,260),C(675,170),C(455,125),C(260,75)],
+  gems:[G(475,120,"green"),G(235,70,"red"),G(890,255,"blue")],
+  key:{x:635,y:165,width:24,height:24}, goal:P(300,55,30,60)
+});
+levels.push({
+  name:"Moving Ground", par:55, start:{x:40,y:320},
+  platforms:[P(0,400,190),P(230,340,120,20,{dx:1.2,minX:210,maxX:390}),P(450,300,120),P(650,260,110,20,{dy:1,minY:210,maxY:330}),P(820,210,140),P(620,130,120,20,{dx:1.4,minX:550,maxX:760}),P(380,90,140)],
+  enemies:[E(470,270,1.9,450,570,"snail"),E(845,180,2.3,820,960,"slime"),{x:575,y:100,width:30,height:30,dy:1.6,minY:70,maxY:210,type:"fly",axis:"y"}],
+  obstacle:P(710,220,30,40), checkpoint:{x:835,y:170,width:24,height:40,spawnX:825,spawnY:130},
+  coins:[C(95,350),C(270,300),C(490,260),C(680,220),C(880,170),C(665,90),C(430,50)],
+  gems:[G(330,295,"yellow"),G(735,90,"blue"),G(500,50,"red")], key:null, goal:P(455,30,30,60)
+});
+levels.push({
+  name:"Final Climb", par:65, start:{x:45,y:320},
+  platforms:[P(0,400,160),P(205,345,110,20,{dx:1.5,minX:190,maxX:370}),P(420,300,110),P(620,350,115,20,{dy:1.2,minY:250,maxY:370}),P(820,285,150),P(660,205,115,20,{dx:1.7,minX:590,maxX:800}),P(430,160,120),P(210,115,120,20,{dy:1,minY:70,maxY:180}),P(40,65,125)],
+  enemies:[E(440,270,2.2,420,530,"snail"),E(850,255,2.5,820,970,"slime"),{x:570,y:125,width:30,height:30,dy:1.8,minY:90,maxY:240,type:"fly",axis:"y"},E(235,85,1.8,210,330)],
+  obstacle:P(690,310,30,40), checkpoint:{x:445,y:120,width:24,height:40,spawnX:430,spawnY:80},
+  coins:[C(90,350),C(240,305),C(455,260),C(655,310),C(865,245),C(705,165),C(465,120),C(250,75),C(85,25)],
+  gems:[G(315,300,"green"),G(920,240,"yellow"),G(520,115,"red"),G(120,20,"blue")],
+  key:{x:725,y:165,width:24,height:24}, goal:P(70,5,30,60)
+});
+function hasMoreLevels() { return currentLevel<levels.length-1; }
+function levelPar() { return levels[currentLevel].par; }
+function finishLevel() {
+  score+=25; const seconds=Math.floor(levelFrames/60);
+  if (seconds<=levelPar()) { score+=35; showStatus("Fast finish +35"); }
+  if (gems.length&&gems.every(g=>g.collected)) { score+=50; showStatus("All gems bonus +50"); }
+  saveHighScore(); isGameRunning=false; winSound.currentTime=0; winSound.play();
+  const more=hasMoreLevels();
+  document.getElementById("game-over-message").innerText=more?"Level Complete!":"Adventure Complete!";
+  document.getElementById("mainActionBtn").innerText=more?"Next Level":"Play Again";
+  document.getElementById("game-over-screen").classList.remove("hidden");
+}
+updateGoal = () => { if (levelKey&&!levelKey.collected) return; if (touches(goal)) finishLevel(); };
+mainAction = function() { if (currentLevel<levels.length-1&&!isGameRunning) { document.getElementById("game-over-screen").classList.add("hidden"); loadLevel(currentLevel+1); isGameRunning=true; cancelAnimationFrame(frameId); gameLoop(); return; } restartGame(); };
