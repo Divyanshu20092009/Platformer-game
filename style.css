@@ -1,0 +1,57 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-image: url("item/iceWaterDeepStars.png");
+  background-size: cover;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+}
+
+canvas {
+  background-color: transparent;
+  border: 2px solid black;
+  width: min(1000px, 96vw);
+  height: auto;
+  image-rendering: auto;
+}
+
+.screen {
+  position: absolute;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 40px;
+  z-index: 10;
+}
+
+.hidden {
+  display: none;
+}
+
+.mobile-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+  gap: 10px;
+}
+
+.mobile-controls button {
+  font-size: 24px;
+  padding: 10px 20px;
+}
+
+@media (max-width: 700px) {
+  .screen {
+    width: 70vw;
+    padding: 28px;
+  }
+
+  .mobile-controls button {
+    font-size: 20px;
+    padding: 9px 18px;
+  }
+}

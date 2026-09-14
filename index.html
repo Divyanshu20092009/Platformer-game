@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Platformer Adventure</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="start-screen" class="screen">
+    <h1>Platformer Adventure</h1>
+    <p>Arrow keys to move · Space to jump · P pause · M sound</p>
+    <button onclick="startGame()">Start</button>
+    <button onclick="exitGame()">Exit</button>
+  </div>
+
+  <div id="game-over-screen" class="screen hidden">
+    <h1 id="game-over-message">Game Over!</h1>
+    <button id="mainActionBtn" onclick="mainAction()">Restart</button>
+    <button onclick="exitGame()">Exit</button>
+  </div>
+
+  <div id="pause-screen" class="screen hidden">
+    <h1>Paused</h1>
+    <p>Press P to continue</p>
+  </div>
+
+  <canvas id="gameCanvas" width="1000" height="500"></canvas>
+
+  <div class="mobile-controls">
+    <button id="leftBtn">◀</button>
+    <button id="jumpBtn">⬆</button>
+    <button id="rightBtn">▶</button>
+  </div>
+
+  <audio id="coinSound" src="sound/retro-coin-4-236671.mp3" preload="auto"></audio>
+  <audio id="jumpSound" src="sound/cartoon-jump-6462.mp3" preload="auto"></audio>
+  <audio id="winSound" src="sound/violin-win-5-185128.mp3" preload="auto"></audio>
+  <audio id="loseSound" src="sound/wrong-buzzer-6268.mp3" preload="auto"></audio>
+
+  <script src="script.js"></script>
+</body>
+</html>
