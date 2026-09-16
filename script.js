@@ -5,13 +5,13 @@ const moveSpeed = 5;
 const jumpPower = 10;
 const image = src => { const img = new Image(); img.src = src; return img; };
 
-const playerImage = image("p1_walk01.png");
+const playerImage = image("p/p1_walk01.png");
 const platformImage = image("item/grassHalfMid.png");
 const enemyImage = image("enemies/fishSwim1.png");
 const slimeImage = image("enemies/slimeWalk1.png");
 const snailImage = image("enemies/snailWalk1.png")
 const flyImage = image("enemies/flyFly1.png");
-const gemImages = { blue: image("collection/gemBlue.png"), green: image("collection/gemGreen.png"), red: image("collection/gemRed.png"), yellow: image("collection/gemYellow.png")};
+const gemImages = { blue: image("collection/gemBlue.png"), green: image("collection/gemGreen.png"), red: image("collection/gemRed.png"), yellow: image("collection/gemYellow.png") };
 const keyImage = image("collection/keyYellow.png");
 const checkpointImage = image("collection/flagGreen.png");
 let muted = false;
@@ -68,7 +68,7 @@ const coinSound = document.getElementById("coinSound");
 const jumpSound = document.getElementById("jumpSound");
 const winSound = document.getElementById("winSound");
 const loseSound = document.getElementById("loseSound");
-const coinImage = image("coinGold.png");
+const coinImage = image("collection/coinGold.png");
 const treeImage = image("item/cactus.png");
 const flagImage = image("item/flagYellow.png");
 let highScore = Number(localStorage.getItem("platformerHighScore")) || 0;
@@ -193,38 +193,38 @@ function finishLevel() {
 updateGoal = () => { if (levelKey && !levelKey.collected) return; if (touches(goal)) finishLevel(); };
 mainAction = function () { if (currentLevel < levels.length - 1 && !isGameRunning) { document.getElementById("game-over-screen").classList.add("hidden"); loadLevel(currentLevel + 1); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); return; } restartGame(); };
 
-updatePlatforms () => platforms.forEach(p => {
-  if(p.dx !== undefined){
+updatePlatforms = () => platforms.forEach(p => {
+  if (p.dx !== undefined) {
     const prevX = p.x; p.x += p.dx;
-    if(p.x < p.minX || p.x > p.maxX) p.dx *= -1;
-    if(player.standingPlatform === p) player.x += p.x - prevX;
+    if (p.x < p.minX || p.x > p.maxX) p.dx *= -1;
+    if (player.standingPlatform === p) player.x += p.x - prevX;
   }
-  if(p.dy !== undefined){
+  if (p.dy !== undefined) {
     const prevY = p.y; p.y += p.dy;
-    if(p.y < p.minY || p.y > p.maxY) p.dy *= -1;
-    if(player.standingPlatform === p) player.y += p.y - prevY;
+    if (p.y < p.minY || p.y > p.maxY) p.dy *= -1;
+    if (player.standingPlatform === p) player.y += p.y - prevY;
   }
 });
 
 updateEnemies = () => enemies.forEach(e => {
-  if(e.defeated) return;
-  if(e.axis === "y"){ e.y += e.dy; if (e.y < e.minY || e.y + e.height > e.maxY) e.dy *= -1; }
-  else{ e.x += e.dx; if (e.x < e.minX || e.x + e.width > e.maxX) e.dx *= -1; }
-  if(!touches(e) || player.invulnerable > 0) return;
-  if(player.dy > 1 && player.height < e.y + 18){ e.defeated = true; player.dy = -7; score += 15; coinSound.currentTime = 0; coinSound.play(); }
+  if (e.defeated) return;
+  if (e.axis === "y") { e.y += e.dy; if (e.y < e.minY || e.y + e.height > e.maxY) e.dy *= -1; }
+  else { e.x += e.dx; if (e.x < e.minX || e.x + e.width > e.maxX) e.dx *= -1; }
+  if (!touches(e) || player.invulnerable > 0) return;
+  if (player.dy > 1 && player.y + player.height < e.y + 18) { e.defeated = true; player.dy = -7; score += 15; coinSound.currentTime = 0; coinSound.play(); }
   else loseLife();
 });
 
 drawEnemies = () => enemies.forEach(e => {
-  if(e.defeated) return;
+  if (e.defeated) return;
   const img = e.type === "slime" ? slimeImage : e.type === "snail" ? snailImage : e.type === "fly" ? flyImage : enemyImage;
   ctx.drawImage(img, e.x, e.y, e.width, e.height);
 });
 
 updateCheckpoint = () => {
-  if(player.invulnerable > 0) player.invulnerable--;
-  if(!checkpoint || checkpoint.active || !touches(checkpoint)) return;
-  checkpoint.active = true; player.spawnX = checkpoint.spawnX; player.spawnY = checkpoint.spawnX;
+  if (player.invulnerable > 0) player.invulnerable--;
+  if (!checkpoint || checkpoint.active || !touches(checkpoint)) return;
+  checkpoint.active = true; player.spawnX = checkpoint.spawnX; player.spawnY = checkpoint.spawnY;
   showStatus("checkpoint reached");
 };
 
@@ -232,14 +232,14 @@ drawCheckpoint = () => { if (checkpoint) ctx.drawImage(checkpointImage, checkpoi
 
 drawExtras = () => {
   gems.forEach(g => { if (!g.collected) ctx.drawImage(gemImages[g.color], g.x, g.y, g.width, g.height); });
-  if(levelKey && !levelKey.collected) ctx.drawImage(keyImage, levelKey.x, levelKey.y, levelKey.width, levelKey.height);
+  if (levelKey && !levelKey.collected) ctx.drawImage(keyImage, levelKey.x, levelKey.y, levelKey.width, levelKey.height);
 }
 
 const oldUpdateCollections = updateCollections;
 updateCollections = () => {
   oldUpdateCollections();
-  gems.forEach(g => { if(!g.collected && touches(g)) {g.collected = true; score += 15; coinSound.currentTime = 0; coinSound.play(); } });
-  if(levelKey && !levelKey.collected && touches(levelKey)) {levelKey.collected = true; showStatus("key collected"); coinSound.currentTime = 0; coinSound.play(); }
+  gems.forEach(g => { if (!g.collected && touches(g)) { g.collected = true; score += 15; coinSound.currentTime = 0; coinSound.play(); } });
+  if (levelKey && !levelKey.collected && touches(levelKey)) { levelKey.collected = true; showStatus("key collected"); coinSound.currentTime = 0; coinSound.play(); }
 };
 handleFall = () => loseLife();
 
@@ -247,15 +247,28 @@ const oldDrawHud = drawHud;
 drawHud = () => { oldDrawHud(); ctx.font = "20px Arial"; ctx.fillText("Lives: " + lives, 10, 80); };
 
 document.addEventListener("keydown", e => {
-  if(e.key.toLowerCase() === "p" && isGameRunning){
+  if (e.key.toLowerCase() === "p" && isGameRunning) {
     gamePaused = !gamePaused;
     document.getElementById("pause-screen").classList.toggle("hidden", !gamePaused);
-    if(!gamePaused) gameLoop();
+    if (!gamePaused) gameLoop();
   }
-  if(e.key.toLowerCase() === "m"){
+  if (e.key.toLowerCase() === "m") {
     muted = !muted;
     [coinSound, jumpSound, winSound, loseSound].forEach(s => s.muted = muted);
     showStatus(muted ? "sound off" : "sound on");
   }
 });
 
+function bindHoldButton(id, onDown, onUp){
+  const btn = document.getElementById(id);
+  const press = e => { e.preventDefault(); onDown(); };
+  const release = e => { e.preventDefault(); onUp(); };
+  btn.addEventListener("touchstart", press);
+  btn.addEventListener("touchend", release);
+  btn.addEventListener("mousedown", press);
+  btn.addEventListener("mouseup", release);
+  btn.addEventListener("mouseleave", release);
+}
+bindHoldButton("leftBtn", () => keys["ArrowLeft"] = true, () => keys["ArrowLeft"] = false);
+bindHoldButton("rightBtn", () => keys["ArrowRight"] = true, () => keys["ArrowRight"] = false);
+bindHoldButton("jumpBtn", () => keys[" "] = true, () => keys[" "] = false);
