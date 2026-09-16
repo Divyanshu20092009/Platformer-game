@@ -5,7 +5,7 @@ const moveSpeed = 5;
 const jumpPower = 10;
 const image = src => { const img = new Image(); img.src = src; return img; };
 
-const playerImage = image("p1_walk01.png");
+const playerImage = image("p/p1_walk01.png");
 const platformImage = image("item/grassHalfMid.png");
 const enemyImage = image("enemies/fishSwim1.png");
 const slimeImage = image("enemies/slimeWalk1.png");
@@ -68,7 +68,7 @@ const coinSound = document.getElementById("coinSound");
 const jumpSound = document.getElementById("jumpSound");
 const winSound = document.getElementById("winSound");
 const loseSound = document.getElementById("loseSound");
-const coinImage = image("coinGold.png");
+const coinImage = image("collection/coinGold.png");
 const treeImage = image("item/cactus.png");
 const flagImage = image("item/flagYellow.png");
 let highScore = Number(localStorage.getItem("platformerHighScore")) || 0;
@@ -259,3 +259,16 @@ document.addEventListener("keydown", e => {
   }
 });
 
+function bindHoldButton(id, onDown, onUp){
+  const btn = document.getElementById(id);
+  const press = e => { e.preventDefault(); onDown(); };
+  const release = e => { e.preventDefault(); onUp(); };
+  btn.addEventListener("touchstart", press);
+  btn.addEventListener("touchend", release);
+  btn.addEventListener("mousedown", press);
+  btn.addEventListener("mouseup", release);
+  btn.addEventListener("mouseleave", release);
+}
+bindHoldButton("leftBtn", () => keys["ArrowLeft"] = true, () => keys["ArrowLeft"] = false);
+bindHoldButton("rightBtn", () => keys["ArrowRight"] = true, () => keys["ArrowRight"] = false);
+bindHoldButton("jumpBtn", () => keys[" "] = true, () => keys[" "] = false);
