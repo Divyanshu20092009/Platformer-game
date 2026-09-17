@@ -449,3 +449,71 @@ updateEnemies = () => enemies.forEach(enemy => {
     loseLife();
   }
 });
+
+drawCheckpoint = () {
+  if(!checkpoint) return;
+  ctx.save();
+  ctx.globalAlpha = checkpoint.active ? 1 : 0.65;
+  ctx.drawImage(checkpointImage, checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
+  if(checkpoint.active){
+    ctx.fillStyle = "white";
+    ctx.font = "12px Arial";
+    ctx.fillText("saved", checkpoint.x - 5, checkpoint.y - 6);
+  }
+  ctx.restore();
+};
+
+gameLoop = () => {
+  if(!isGameRunning || gamePaused) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  levelFrames++;
+  movePlayer();
+  updatePlatforms();
+  updatePlayer();
+  updateEnemies();
+  updateCollections();
+  updateCheckpoint();
+  updateHazard();
+  updateGoal();
+  drawPlatforms();
+  drawEnemies();
+  drawObstacle();
+  drawCoins();
+  drawExtras();
+  drawHazards();
+  drawCheckpoint();
+  drawGoal();
+  drawPlayer();
+  drawHud();
+  frameId = requestAnimationFrame(gameLoop);
+};
+
+let hazards = [];
+levels[0].hazards = [{ x: 600, y: 350, width: 30, height: 50, type: "cactus" }];
+levels[1].hazards = [{ x: 240, y: 390, width: 40, height: 110, type: "water" }, { x: 690, y: 210, width: 30, height: 40, type: "cactus" }];
+levels[2].hazards = [{ x: 180, y: 390, width: 50, height: 110, type: "water" }, { x: 650, y: 305, width: 30, height: 50, type: "cactus" }];
+levels[3].hazards = [{ x: 190, y: 390, width: 40, height: 110, type: "water" }, { x: 710, y: 210, width: 30, height: 50, type: "cactus" }];
+levels[4].hazards = [{ x: 190, y: 390, width: 45, height: 110, type: "water" }, { x: 690, y: 300, width: 30, height: 50, type: "cactus" }];
+
+const loadLevelBeforeHazards = loadLevel;
+loadLevel = index => {
+  loadLevelBeforeHazards(index);
+  hazards = (levels[index].hazards || []).map(item => ({ ...item }));
+};
+
+function updateHazard(){
+  hazards.forEach(hazard => {
+    if(!touches(hazard) || player.invulnerable > 0) return;
+    if(hazard.type === "water"){
+      loseLife();
+      return;
+    }
+    hurtPlayer(hazard);
+  });
+}
+
+function drawHazards(){
+  hazards.forEach(hazard => {
+    if(hazard.type === "cactus") ctx.drawImage(treeImage, hazard.x, hazard.y, hazard.width, hazard.height);
+  });
+}
