@@ -3,7 +3,11 @@ const ctx = canvas.getContext("2d");
 const gravity = 0.5;
 const moveSpeed = 5;
 const jumpPower = 10;
-const image = src => { const img = new Image(); img.src = src; return img; };
+const image = src => {
+  const img = new Image();
+  img.src = src;
+  return img;
+};
 
 const playerImage = image("p/p1_walk01.png");
 const platformImage = image("item/grassHalfMid.png");
@@ -16,7 +20,21 @@ const keyImage = image("collection/keyYellow.png");
 const checkpointImage = image("collection/flagGreen.png");
 let muted = false;
 
-const player = { x: 100, y: 300, width: 40, height: 60, dx: 0, dy: 0, jumping: false, grounded: false, spawnX: 100, spawnY: 300, animationTick: 0, invulnerable: 0, standingPlatform: null };
+const player = {
+  x: 100,
+  y: 300,
+  width: 40,
+  height: 60,
+  dx: 0,
+  dy: 0,
+  jumping: false,
+  grounded: false,
+  spawnX: 100,
+  spawnY: 300,
+  animationTick: 0,
+  invulnerable: 0,
+  standingPlatform: null
+};
 let platforms = [{ x: 0, y: 400, width: 1000, height: 20 }];
 let enemies = [];
 let obstacle = { x: 600, y: 360, width: 30, height: 40 };
@@ -272,3 +290,46 @@ function bindHoldButton(id, onDown, onUp){
 bindHoldButton("leftBtn", () => keys["ArrowLeft"] = true, () => keys["ArrowLeft"] = false);
 bindHoldButton("rightBtn", () => keys["ArrowRight"] = true, () => keys["ArrowRight"] = false);
 bindHoldButton("jumpBtn", () => keys[" "] = true, () => keys[" "] = false);
+const walkFrames = [
+  image("p/p1_walk01.png"), image("p/p1_walk02.png"), image("p/p1_walk03.png"), image("p/p1_walk04.png"),
+  image("p/p1_walk05.png"), image("p/p1_walk06.png"), image("p/p1_walk07.png"), image("p/p1_walk08.png")
+];
+const jumpFrame = image("p/p1_jump.png");
+const hurtFrame = image("p/p1_hurt.png");
+let playerFacing = 1;
+let playerState = "idle";
+let playerFrame = 0;
+let playerFrameTick = 0;
+
+function updatePlayerAnimation() {
+  if (player.invulnerable > 65) playerState = "hurt";
+  else if (!player.grounded) playerState = "jump";
+  else if (Math.abs(player.dx) > 0.1) playerState = "walk";
+  else playerState = "idle";
+  if (player.dx < 0) playerFacing = -1;
+  if (player.dx > 0) playerFacing = 1;
+  if (playerState === "walk") {
+    playerFrameTick++;
+    if (playerFrameTick >= 6) {
+      playerFrame = (playerFrame + 1) % walkFrames.length;
+      playerFrameTick = 0;
+    }
+  } else {
+    playerFrame = 0;
+    playerFrameTick = 0;
+  }
+}
+
+drawPlayer = () => {
+  updatePlayerAnimation();
+  const frame = playerState === "hurt" ? hurtFrame : playerState === "jump" ? jumpFrame : walkFrames[playerFrame];
+  ctx.save();
+  if (playerFacing < 0) {
+    ctx.translate(player.x + player.width, player.y);
+    ctx.scale(-1, 1);
+    ctx.drawImage(frame, 0, 0, player.width, player.height);
+  } else {
+    ctx.drawImage(frame, player.x, player.y, player.width, player.height);
+  }
+  ctx.restore();
+};
