@@ -108,7 +108,12 @@ const flagImage = image("item/flagYellow.png");
 let highScore = Number(localStorage.getItem("platformerHighScore")) || 0;
 let statusText = "";
 let statusFrames = 0;
-function touches(item) { return player.x < item.x + item.width && player.x + player.width > item.x && player.y < item.y + item.height && player.y + player.height > item.y; }
+function touches(item) {
+  return player.x < item.x + item.width &&
+    player.x + player.width > item.x &&
+    player.y < item.y + item.height &&
+    player.y + player.height > item.y;
+}
 function showStatus(text) { statusText = text; statusFrames = 90; }
 function saveHighScore() { if (score > highScore) { highScore = score; localStorage.setItem("platformerHighScore", highScore); } }
 function collectedCoinCount() { return coins.filter(c => c.collected).length; }
@@ -121,7 +126,9 @@ drawObstacle = () => {
   ctx.drawImage(treeImage, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
 };
 drawCoins = () => coins.forEach(c => { if (!c.collected) ctx.drawImage(coinImage, c.x, c.y, c.width, c.height); });
-drawGoal = () => ctx.drawImage(flagImage, goal.x, goal.y, goal.width, goal.height);
+drawGoal = () => {
+  ctx.drawImage(flagImage, goal.x, goal.y, goal.width, goal.height);
+};
 updateCollections = () => coins.forEach(c => {
   if (!c.collected && touches(c)) { c.collected = true; score += 10; coinSound.currentTime = 0; coinSound.play(); }
 });
@@ -390,3 +397,55 @@ updatePlayer = () => {
   else if (wasGrounded || coyoteFrames > 0) coyoteFrames--;
   if (!jumpHeld && player.dy < -3) player.dy *= 0.82;
 };
+
+function enemyMovementType(enemy) {
+  if (enemy.type === "fly") return "vertical";
+  if (enemy.type === "slime") return "chase";
+  if (enemy.type === "snail") return "slow";
+  return "swim";
+}
+
+function patrolEnemy(enemy, speedScale = 1) {
+  enemy.x += enemy.dx * speedScale;
+  if (enemy.x < enemy.minX || enemy.x + enemy.width > enemy.maxX) {
+    enemy.dx *= -1;
+    enemy.x = Math.max(enemy.minX, Math.min(enemy.maxX - enemy.width, enemy.x));
+  }
+}
+
+function updateEnemyMovement(enemy) {
+  const movement = enemyMovementType(enemy);
+  if (movement === "vertical") {
+    enemy.y += enemy.dy;
+    if (enemy.y < enemy.minY || enemy.y + enemy.height > enemy.maxY) enemy.dy *= -1;
+    return;
+  }
+  if (movement === "chase") {
+    const distance = player.x - enemy.x;
+    if (Math.abs(distance) < 190) enemy.dx = distance < 0 ? -2.1 : 2.1;
+    patrolEnemy(enemy, 1);
+    return;
+  }
+  if (movement === "slow") {
+    patrolEnemy(enemy, 0.55);
+    return;
+  }
+  enemy.bob = (enemy.bob || 0) + 0.08;
+  enemy.y += Math.sin(enemy.bob) * 0.35;
+  patrolEnemy(enemy, 1);
+}
+
+updateEnemies = () => enemies.forEach(enemy => {
+  if (enemy.defeated) return;
+  updateEnemyMovement(enemy);
+  if (!touches(enemy) || player.invulnerable > 0) return;
+  if (player.dy > 1 && player.y + player.height < enemy.y + 18) {
+    enemy.defeated = true;
+    player.dy = -7;
+    score += 15;
+    coinSound.currentTime = 0;
+    coinSound.play();
+  } else {
+    loseLife();
+  }
+});
