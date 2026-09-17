@@ -13,7 +13,7 @@ const playerImage = image("p/p1_walk01.png");
 const platformImage = image("item/grassHalfMid.png");
 const enemyImage = image("enemies/fishSwim1.png");
 const slimeImage = image("enemies/slimeWalk1.png");
-const snailImage = image("enemies/snailWalk1.png");
+const snailImage = image("enemies/snailWalk1.png")
 const flyImage = image("enemies/flyFly1.png");
 const gemImages = { blue: image("collection/gemBlue.png"), green: image("collection/gemGreen.png"), red: image("collection/gemRed.png"), yellow: image("collection/gemYellow.png") };
 const keyImage = image("collection/keyYellow.png");
@@ -66,12 +66,28 @@ let drawExtras = () => { };
 let drawCheckpoint = () => { };
 let drawGoal = () => { };
 let drawHud = () => { };
-function resetPlayer() { player.x = player.spawnX; player.y = player.spawnY; player.dx = 0; player.dy = 0; player.jumping = false; player.grounded = false; player.standingPlatform = null; }
-function drawPlatforms() { platforms.forEach(p => { for (let x = 0; x < p.width; x += 50) ctx.drawImage(platformImage, p.x + x, p.y, 50, 20); }); }
-function drawPlayer() { ctx.drawImage(playerImage, player.x, player.y, player.width, player.height); }
+function resetPlayer() {
+  player.x = player.spawnX;
+  player.y = player.spawnY;
+  player.dx = 0;
+  player.dy = 0;
+  player.jumping = false;
+  player.grounded = false;
+  player.standingPlatform = null;
+}
+function drawPlatforms() {
+  platforms.forEach(platform => {
+    for (let x = 0; x < platform.width; x += 50) {
+      ctx.drawImage(platformImage, platform.x + x, platform.y, 50, 20);
+    }
+  });
+}
+function drawPlayer() {
+  ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
+}
 function movePlayer() { if ((keys.ArrowUp || keys[" "]) && player.grounded) { player.dy = -jumpPower; player.jumping = true; player.grounded = false; } player.dx = keys.ArrowLeft && !keys.ArrowRight ? -moveSpeed : keys.ArrowRight && !keys.ArrowLeft ? moveSpeed : 0; }
 function updatePlayer() {
-  const oldBottom = player.y + player.height; player.x = Math.max(0, Math.min(canvas.width - player.width, player.x + player.dx)); player.y += player.dy; player.dy += gravity; player.grounded = false; player.standingPlatform = null;
+  const oldBottom = player.y + player.height; player.x = Math.max(0, Math.min(canvas.width - player.width, player.x + player.dx)); player.y += player.dy; player.dy += gravity; player.grounded = false;
   platforms.forEach(p => { const bottom = player.y + player.height, inside = player.x < p.x + p.width && player.x + player.width > p.x; if (inside && oldBottom <= p.y && bottom >= p.y && player.dy >= 0) { player.y = p.y - player.height; player.dy = 0; player.jumping = false; player.grounded = true; player.standingPlatform = p; } });
   if (player.y > canvas.height + 80) handleFall();
 }
@@ -101,7 +117,9 @@ coins = [
   { x: 200, y: 360, width: 20, height: 20, collected: false },
   { x: 500, y: 220, width: 20, height: 20, collected: false }
 ];
-drawObstacle = () => ctx.drawImage(treeImage, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+drawObstacle = () => {
+  ctx.drawImage(treeImage, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+};
 drawCoins = () => coins.forEach(c => { if (!c.collected) ctx.drawImage(coinImage, c.x, c.y, c.width, c.height); });
 drawGoal = () => ctx.drawImage(flagImage, goal.x, goal.y, goal.width, goal.height);
 updateCollections = () => coins.forEach(c => {
@@ -213,8 +231,7 @@ mainAction = function () { if (currentLevel < levels.length - 1 && !isGameRunnin
 
 updatePlatforms = () => platforms.forEach(p => {
   if (p.dx !== undefined) {
-    const prevX = p.x;
-    p.x += p.dx;
+    const prevX = p.x; p.x += p.dx;
     if (p.x < p.minX || p.x > p.maxX) p.dx *= -1;
     if (player.standingPlatform === p) player.x += p.x - prevX;
   }
@@ -243,9 +260,7 @@ drawEnemies = () => enemies.forEach(e => {
 updateCheckpoint = () => {
   if (player.invulnerable > 0) player.invulnerable--;
   if (!checkpoint || checkpoint.active || !touches(checkpoint)) return;
-  checkpoint.active = true;
-  player.spawnX = checkpoint.spawnX;
-  player.spawnY = checkpoint.spawnY;
+  checkpoint.active = true; player.spawnX = checkpoint.spawnX; player.spawnY = checkpoint.spawnY;
   showStatus("checkpoint reached");
 };
 
@@ -293,76 +308,85 @@ function bindHoldButton(id, onDown, onUp){
 bindHoldButton("leftBtn", () => keys["ArrowLeft"] = true, () => keys["ArrowLeft"] = false);
 bindHoldButton("rightBtn", () => keys["ArrowRight"] = true, () => keys["ArrowRight"] = false);
 bindHoldButton("jumpBtn", () => keys[" "] = true, () => keys[" "] = false);
+const walkFrames = [
+  image("p/p1_walk01.png"), image("p/p1_walk02.png"), image("p/p1_walk03.png"), image("p/p1_walk04.png"),
+  image("p/p1_walk05.png"), image("p/p1_walk06.png"), image("p/p1_walk07.png"), image("p/p1_walk08.png")
+];
+const jumpFrame = image("p/p1_jump.png");
+const hurtFrame = image("p/p1_hurt.png");
+let playerFacing = 1;
+let playerState = "idle";
+let playerFrame = 0;
+let playerFrameTick = 0;
 
-// level.push({
-//   name: "Wind Tunnel", par: 65, start: { x: 40, y: 320 },
-//   platforms: [
-//     P(0, 400, 150),
-//     P(300, 350, 110),
-//     P(560, 320, 120),
-//     P(760, 280, 150),
-//     P(560, 190, 120),
-//     P(320, 150, 120),
-//     P(100, 100, 140)
-//   ],
-//   wind:[
-//     { x: 150, y: 300, width: 150, height: 100, force: -0.25 },
-//     { x: 680, y: 190, width: 80, height: 130, force: 0.3 },
-//     { x: 220, y: 100, width: 100, height: 150, force: 0.25 }
-//   ],
-//   enemies: [
-//     E(580, 290, 1.8, 560, 670, "snail"),
-//     { x: 720, y: 230, width: 30, height: 30, dy: 1.4, minY: 200, maxY: 300, type: "fly", axis: "y" },
-//     E(340, 120, 1.6, 320, 430, "slime")
-//   ],
-//   obstacle: P(60, 360, 30, 40),
-//   checkpoint: { x: 800, y: 240, width: 24, height: 40, spawnX: 790, spawnY: 195 },
-//   coins: [x(70, 350), C(340, 310), C(610, 280), C(850, 235), C(600, 150), C(360, 110), C(140, 60)],
-//   gems: [G(400, 305, "blue"), G(880, 235, "yellow"), G(150, 55, "green")],
-//   key: null,
-//   goal: P(105, 40, 30, 60)
-// });
-
-// let windZones = [];
-// let windTime = 0;
-
-function updateFallingPlatform(platform){
-  if(!platform.falling) return;
-  if(!platform.triggered && player.standingPlatform === platform) platform.fallTimer = (platform.fallTimer || 0) + 1;
-  if(!platform.triggered && platform.fallTimer >= (platform.fallDelay || 35)) platform.triggered = true;
-  if(platform.triggered){
-    platform.dy = Math.min((platform.dy || 0) + 0.28, 7);
-    platform.y += platform.dy;
+function updatePlayerAnimation() {
+  if (player.invulnerable > 65) playerState = "hurt";
+  else if (!player.grounded) playerState = "jump";
+  else if (Math.abs(player.dx) > 0.1) playerState = "walk";
+  else playerState = "idle";
+  if (player.dx < 0) playerFacing = -1;
+  if (player.dx > 0) playerFacing = 1;
+  if (playerState === "walk") {
+    playerFrameTick++;
+    if (playerFrameTick >= 6) {
+      playerFrame = (playerFrame + 1) % walkFrames.length;
+      playerFrameTick = 0;
+    }
+  } else {
+    playerFrame = 0;
+    playerFrameTick = 0;
   }
 }
 
-levels[1].platforms[3].falling = true;
-levels[1].platforms[3].fallDelay = 42;
-levels[2].platforms[3].falling = true;
-levels[2].platforms[3].fallDelay = 36;
-levels[4].platforms[6].falling = true;
-levels[4].platforms[6].fallDelay = 30;
-
-updatePlatforms = () => platforms.forEach(platform => {
-  platform.lastX = platform.x;
-  platform.lastY = platform.y;
-  if(platform.falling){
-    updateFallingPlatform(platform);
+drawPlayer = () => {
+  updatePlayerAnimation();
+  const frame = playerState === "hurt" ? hurtFrame : playerState === "jump" ? jumpFrame : walkFrames[playerFrame];
+  ctx.save();
+  if (playerFacing < 0) {
+    ctx.translate(player.x + player.width, player.y);
+    ctx.scale(-1, 1);
+    ctx.drawImage(frame, 0, 0, player.width, player.height);
   } else {
-    if(platform.dx !== undefined){
-      platform.x < platform.dx;
-      if(platform.x < platform.minX || platform.x > platform.maxX){
-        platform.dx *= -1;
-        platform.x = Math.max(platform.minX, Math.min(platform.maxX, platform.x));
-      }
-    }
-    if(platform.dy !== undefined){
-      platform.y += platform.dy;
-      if(platform.y < platform.minY || platform.y > platform.maxY){
-        platform.dy *= -1;
-        platform.y = Math.max(platform.minY, Math.min(platform.maxY, platform.y));
-      }
-    }
+    ctx.drawImage(frame, player.x, player.y, player.width, player.height);
   }
-  if(player.standingPlatform === platform) carryPlayerWithPlatform(platform);
-});
+  ctx.restore();
+};
+
+let jumpBufferFrames = 0;
+let coyoteFrames = 0;
+let jumpHeld = false;
+
+function queueJump() {
+  jumpBufferFrames = 8;
+}
+
+function useBufferedJump() {
+  if (jumpBufferFrames <= 0) return false;
+  if (!player.grounded && coyoteFrames <= 0) return false;
+  player.dy = -jumpPower;
+  player.jumping = true;
+  player.grounded = false;
+  coyoteFrames = 0;
+  jumpBufferFrames = 0;
+  jumpSound.currentTime = 0;
+  jumpSound.play();
+  return true;
+}
+
+movePlayer = () => {
+  const jumpDown = !!(keys.ArrowUp || keys[" "]);
+  if (jumpDown && !jumpHeld) queueJump();
+  jumpHeld = jumpDown;
+  if (jumpBufferFrames > 0) jumpBufferFrames--;
+  useBufferedJump();
+  player.dx = keys.ArrowLeft && !keys.ArrowRight ? -moveSpeed : keys.ArrowRight && !keys.ArrowLeft ? moveSpeed : 0;
+};
+
+const updatePlayerWithCoyote = updatePlayer;
+updatePlayer = () => {
+  const wasGrounded = player.grounded;
+  updatePlayerWithCoyote();
+  if (player.grounded) coyoteFrames = 7;
+  else if (wasGrounded || coyoteFrames > 0) coyoteFrames--;
+  if (!jumpHeld && player.dy < -3) player.dy *= 0.82;
+};
