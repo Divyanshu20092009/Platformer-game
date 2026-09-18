@@ -290,11 +290,6 @@ const oldDrawHud = drawHud;
 drawHud = () => { oldDrawHud(); ctx.font = "20px Arial"; ctx.fillText("Lives: " + lives, 10, 80); };
 
 document.addEventListener("keydown", e => {
-  if (e.key.toLowerCase() === "p" && isGameRunning) {
-    gamePaused = !gamePaused;
-    document.getElementById("pause-screen").classList.toggle("hidden", !gamePaused);
-    if (!gamePaused) gameLoop();
-  }
   if (e.key.toLowerCase() === "m") {
     muted = !muted;
     [coinSound, jumpSound, winSound, loseSound].forEach(s => s.muted = muted);
@@ -302,7 +297,7 @@ document.addEventListener("keydown", e => {
   }
 });
 
-function bindHoldButton(id, onDown, onUp) {
+function bindHoldButton(id, onDown, onUp){
   const btn = document.getElementById(id);
   const press = e => { e.preventDefault(); onDown(); };
   const release = e => { e.preventDefault(); onUp(); };
@@ -450,12 +445,12 @@ updateEnemies = () => enemies.forEach(enemy => {
   }
 });
 
-drawCheckpoint = () {
-  if (!checkpoint) return;
+drawCheckpoint = () => {
+  if(!checkpoint) return;
   ctx.save();
   ctx.globalAlpha = checkpoint.active ? 1 : 0.65;
   ctx.drawImage(checkpointImage, checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
-  if (checkpoint.active) {
+  if(checkpoint.active){
     ctx.fillStyle = "white";
     ctx.font = "12px Arial";
     ctx.fillText("saved", checkpoint.x - 5, checkpoint.y - 6);
@@ -464,7 +459,7 @@ drawCheckpoint = () {
 };
 
 gameLoop = () => {
-  if (!isGameRunning || gamePaused) return;
+  if(!isGameRunning || gamePaused) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   levelFrames++;
   movePlayer();
@@ -501,10 +496,10 @@ loadLevel = index => {
   hazards = (levels[index].hazards || []).map(item => ({ ...item }));
 };
 
-function updateHazard() {
+function updateHazard(){
   hazards.forEach(hazard => {
-    if (!touches(hazard) || player.invulnerable > 0) return;
-    if (hazard.type === "water") {
+    if(!touches(hazard) || player.invulnerable > 0) return;
+    if(hazard.type === "water"){
       loseLife();
       return;
     }
@@ -512,8 +507,69 @@ function updateHazard() {
   });
 }
 
-function drawHazards() {
+function drawHazards(){
   hazards.forEach(hazard => {
-    if (hazard.type === "cactus") ctx.drawImage(treeImage, hazard.x, hazard.y, hazard.width, hazard.height);
+    if(hazard.type === "cactus") ctx.drawImage(treeImage, hazard.x, hazard.y, hazard.width, hazard.height);
   });
 }
+
+function hurtPlayer(enemy){
+  if(player.invulnerable > 0) return;
+  lives--;
+  player.invulnerable = 90;
+  player.dy = -5;
+  player.dx = enemy && enemy.x < player.x ? 6 : -6;
+  loseSound.currentTime = 0;
+  loseSound.play();
+  showStatus("Lives left: " + Math.max(0, lives));
+  if(lives <= 0){
+    isGameRunning = false;
+    saveHighScore();
+    document.getElementById("game-over-message").innerText = "Game Over!";
+    document.getElementById("mainActionBtn").innerText = "Restart";
+    document.getElementById("game-over-screen").classList.remove("hidden");
+  }
+}
+
+function formatTime(frames){
+  const totalSeconds = frames / 60;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.floor(totalSeconds % 60).toString().padStart(2, "0");
+  const hundredths  = Math.floor((frames % 60) * 100 / 60).toString().padStart(2, "0");
+  return minutes + ":" + seconds + "." + hundredths;
+}
+
+const drawHudBeforeTimer = drawHud;
+drawHud = () => {
+  drawHudBeforeTimer();
+  ctx.fillStyle = "black";
+  ctx.font = "18px Arial";
+  ctx.textAlign = "right";
+  ctx.fillText(currentLevelName(), canvas.width - 12, 22);
+  ctx.fillText("Time " + formatTime(levelFrames), canvas.width - 12, 44);
+  ctx.fillText("Par " + levels[currentLevel].par + "s", canvas.width - 12, 66);
+  ctx.textAlign = "left";
+};
+
+function setPaused(value){
+  if(!isGameRunning && !gamePaused) return;
+  gamePaused = value;
+  document.getElementById("pause-screen").classList.toggle("hidden", !gamePaused);
+  if(!gamePaused && isGameRunning){
+    cancelAnimationFrame(frameId);
+    gameLoop();
+  }
+}
+
+function restartCurrentLevel(){
+  document.getElementById("paused-screen").classList.add("hidden");
+  gamePaused = false;
+  loadLevel(currentLevel);
+  isGameRunning = true;
+  cancelAnimationFrame(frameId);
+  gameLoop();
+}
+
+document.addEventListener("keydown", event => {
+  if(event.key.toLowerCase() === "p" && isGameRunning) setPaused(!gamePaused);
+});
