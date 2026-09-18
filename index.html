@@ -25,6 +25,8 @@
   <div id="pause-screen" class="screen hidden">
     <h1>Paused</h1>
     <p>Press P to continue</p>
+    <button onclick="setPaused(false)">Resume</button>
+    <button onclick="restartCurrentLevel()">Restart Level</button>
   </div>
 
   <canvas id="gameCanvas" width="1000" height="500"></canvas>
