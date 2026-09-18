@@ -91,7 +91,28 @@ function updatePlayer() {
   platforms.forEach(p => { const bottom = player.y + player.height, inside = player.x < p.x + p.width && player.x + player.width > p.x; if (inside && oldBottom <= p.y && bottom >= p.y && player.dy >= 0) { player.y = p.y - player.height; player.dy = 0; player.jumping = false; player.grounded = true; player.standingPlatform = p; } });
   if (player.y > canvas.height + 80) handleFall();
 }
-function gameLoop() { if (!isGameRunning || gamePaused) return; ctx.clearRect(0, 0, canvas.width, canvas.height); levelFrames++; movePlayer(); updatePlatforms(); updatePlayer(); updateEnemies(); updateCollections(); updateCheckpoint(); updateGoal(); drawPlatforms(); drawEnemies(); drawObstacle(); drawCoins(); drawExtras(); drawCheckpoint(); drawGoal(); drawPlayer(); drawHud(); frameId = requestAnimationFrame(gameLoop); }
+function gameLoop() {
+  if (!isGameRunning || gamePaused) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  levelFrames++;
+  movePlayer();
+  updatePlatforms();
+  updatePlayer();
+  updateEnemies();
+  updateCollections();
+  updateCheckpoint();
+  updateGoal();
+  drawPlatforms();
+  drawEnemies();
+  drawObstacle();
+  drawCoins();
+  drawExtras();
+  drawCheckpoint();
+  drawGoal();
+  drawPlayer();
+  drawHud();
+  frameId = requestAnimationFrame(gameLoop);
+}
 function startGame() {
   document.getElementById("start-screen").classList.add("hidden");
   setupWorld();
@@ -129,7 +150,10 @@ function touches(item) {
     player.y < item.y + item.height &&
     player.y + player.height > item.y;
 }
-function showStatus(text) { statusText = text; statusFrames = 90; }
+function showStatus(text) {
+  statusText = text;
+  statusFrames = 90;
+}
 function saveHighScore() {
   if (score > highScore) {
     highScore = score;
@@ -166,7 +190,8 @@ updateGoal = () => {
   document.getElementById("game-over-screen").classList.remove("hidden");
 };
 drawHud = () => {
-  ctx.fillStyle = "black"; ctx.font = "20px Arial";
+  ctx.fillStyle = "black";
+  ctx.font = "20px Arial";
   ctx.fillText("Score: " + score, 10, 20);
   ctx.fillText("High Score: " + highScore, 10, 40);
   ctx.fillText("Coins: " + collectedCoinCount() + "/" + coins.length, 10, 60);
@@ -174,7 +199,8 @@ drawHud = () => {
 };
 const oldMovePlayer = movePlayer;
 movePlayer = function () {
-  const wasGrounded = player.grounded; oldMovePlayer();
+  const wasGrounded = player.grounded;
+  oldMovePlayer();
   if ((keys.ArrowUp || keys[" "]) && wasGrounded && player.dy < 0) { jumpSound.currentTime = 0; jumpSound.play(); }
 };
 function loseLife() {
@@ -564,4 +590,35 @@ drawCheckpoint = () => {
     ctx.fillText("saved", checkpoint.x - 5, checkpoint.y - 6);
   }
   ctx.restore();
+};
+
+let lockedGoalNotice = 0;
+
+function goalIsLocked() {
+  return !!(levelKey && !levelKey.collected);
+}
+
+updateGoal = () => {
+  if (!touches(goal)) return;
+  if (goalIsLocked()) {
+    if (lockedGoalNotice <= 0) {
+      showStatus("find the key first");
+      lockedGoalNotice = 90;
+    }
+    return;
+  }
+  finishLevel();
+};
+
+drawGoal = () => {
+  ctx.save();
+  ctx.globalAlpha = goalIsLocked() ? 0.45 : 1;
+  ctx.drawImage(flagImage, goal.x, goal.y, goal.width, goal.height);
+  ctx.restore();
+  if (goalIsLocked()) {
+    ctx.fillStyle = "black";
+    ctx.font = "15px Arial";
+    ctx.fillText("key", goal.x - 1, goal.y - 7);
+  }
+  if (lockedGoalNotice > 0) lockedGoalNotice--;
 };
