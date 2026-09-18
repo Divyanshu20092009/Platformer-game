@@ -302,7 +302,7 @@ document.addEventListener("keydown", e => {
   }
 });
 
-function bindHoldButton(id, onDown, onUp){
+function bindHoldButton(id, onDown, onUp) {
   const btn = document.getElementById(id);
   const press = e => { e.preventDefault(); onDown(); };
   const release = e => { e.preventDefault(); onUp(); };
@@ -451,11 +451,11 @@ updateEnemies = () => enemies.forEach(enemy => {
 });
 
 drawCheckpoint = () {
-  if(!checkpoint) return;
+  if (!checkpoint) return;
   ctx.save();
   ctx.globalAlpha = checkpoint.active ? 1 : 0.65;
   ctx.drawImage(checkpointImage, checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
-  if(checkpoint.active){
+  if (checkpoint.active) {
     ctx.fillStyle = "white";
     ctx.font = "12px Arial";
     ctx.fillText("saved", checkpoint.x - 5, checkpoint.y - 6);
@@ -464,7 +464,7 @@ drawCheckpoint = () {
 };
 
 gameLoop = () => {
-  if(!isGameRunning || gamePaused) return;
+  if (!isGameRunning || gamePaused) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   levelFrames++;
   movePlayer();
@@ -501,10 +501,10 @@ loadLevel = index => {
   hazards = (levels[index].hazards || []).map(item => ({ ...item }));
 };
 
-function updateHazard(){
+function updateHazard() {
   hazards.forEach(hazard => {
-    if(!touches(hazard) || player.invulnerable > 0) return;
-    if(hazard.type === "water"){
+    if (!touches(hazard) || player.invulnerable > 0) return;
+    if (hazard.type === "water") {
       loseLife();
       return;
     }
@@ -512,8 +512,8 @@ function updateHazard(){
   });
 }
 
-function drawHazards(){
+function drawHazards() {
   hazards.forEach(hazard => {
-    if(hazard.type === "cactus") ctx.drawImage(treeImage, hazard.x, hazard.y, hazard.width, hazard.height);
+    if (hazard.type === "cactus") ctx.drawImage(treeImage, hazard.x, hazard.y, hazard.width, hazard.height);
   });
 }
