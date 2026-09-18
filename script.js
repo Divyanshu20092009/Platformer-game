@@ -115,8 +115,15 @@ function touches(item) {
     player.y + player.height > item.y;
 }
 function showStatus(text) { statusText = text; statusFrames = 90; }
-function saveHighScore() { if (score > highScore) { highScore = score; localStorage.setItem("platformerHighScore", highScore); } }
-function collectedCoinCount() { return coins.filter(c => c.collected).length; }
+function saveHighScore() {
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem("platformerHighScore", highScore);
+  }
+}
+function collectedCoinCount() {
+  return coins.filter(coin => coin.collected).length;
+}
 coins = [
   { x: 100, y: 360, width: 20, height: 20, collected: false },
   { x: 200, y: 360, width: 20, height: 20, collected: false },
@@ -125,7 +132,11 @@ coins = [
 drawObstacle = () => {
   ctx.drawImage(treeImage, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
 };
-drawCoins = () => coins.forEach(c => { if (!c.collected) ctx.drawImage(coinImage, c.x, c.y, c.width, c.height); });
+drawCoins = () => coins.forEach(coin => {
+  if (!coin.collected) {
+    ctx.drawImage(coinImage, coin.x, coin.y, coin.width, coin.height);
+  }
+});
 drawGoal = () => {
   ctx.drawImage(flagImage, goal.x, goal.y, goal.width, goal.height);
 };
@@ -448,4 +459,52 @@ updateEnemies = () => enemies.forEach(enemy => {
   } else {
     loseLife();
   }
+});
+
+function defeatEnemy(enemy) {
+  enemy.defeated = true;
+  enemy.defeatFrames = 24;
+  player.dy = -7;
+  score += 15;
+  coinSound.currentTime = 0;
+  coinSound.play();
+}
+
+function hurtPlayer(enemy) {
+  if (player.invulnerable > 0) return;
+  lives--;
+  player.invulnerable = 90;
+  player.dy = -5;
+  player.dx = enemy && enemy.x < player.x ? 6 : -6;
+  loseSound.currentTime = 0;
+  loseSound.play();
+  showStatus("Lives left: " + Math.max(0, lives));
+  if (lives <= 0) {
+    isGameRunning = false;
+    saveHighScore();
+    document.getElementById("game-over-message").innerText = "Game Over!";
+    document.getElementById("mainActionBtn").innerText = "Restart";
+    document.getElementById("game-over-screen").classList.remove("hidden");
+  }
+}
+
+updateEnemies = () => enemies.forEach(enemy => {
+  if (enemy.defeated) {
+    if (enemy.defeatFrames > 0) enemy.defeatFrames--;
+    return;
+  }
+  updateEnemyMovement(enemy);
+  if (!touches(enemy) || player.invulnerable > 0) return;
+  const playerBottom = player.y + player.height;
+  if (player.dy > 1 && playerBottom < enemy.y + enemy.height * 0.65) defeatEnemy(enemy);
+  else hurtPlayer(enemy);
+});
+
+drawEnemies = () => enemies.forEach(enemy => {
+  if (enemy.defeated && enemy.defeatFrames <= 0) return;
+  let img = enemy.type === "slime" ? slimeImage : enemy.type === "snail" ? snailImage : enemy.type === "fly" ? flyImage : enemyImage;
+  if (enemy.defeated && enemy.type === "slime") img = image("enemies/slimeDead.png");
+  if (enemy.defeated && enemy.type === "fish") img = image("enemies/fishDead.png");
+  const squash = enemy.defeated ? 0.55 : 1;
+  ctx.drawImage(img, enemy.x, enemy.y + enemy.height * (1 - squash), enemy.width, enemy.height * squash);
 });
