@@ -92,8 +92,23 @@ function updatePlayer() {
   if (player.y > canvas.height + 80) handleFall();
 }
 function gameLoop() { if (!isGameRunning || gamePaused) return; ctx.clearRect(0, 0, canvas.width, canvas.height); levelFrames++; movePlayer(); updatePlatforms(); updatePlayer(); updateEnemies(); updateCollections(); updateCheckpoint(); updateGoal(); drawPlatforms(); drawEnemies(); drawObstacle(); drawCoins(); drawExtras(); drawCheckpoint(); drawGoal(); drawPlayer(); drawHud(); frameId = requestAnimationFrame(gameLoop); }
-function startGame() { document.getElementById("start-screen").classList.add("hidden"); setupWorld(); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); }
-function restartGame() { score = 0; lives = 3; currentLevel = 0; setupWorld(); document.getElementById("game-over-screen").classList.add("hidden"); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); }
+function startGame() {
+  document.getElementById("start-screen").classList.add("hidden");
+  setupWorld();
+  isGameRunning = true;
+  cancelAnimationFrame(frameId);
+  gameLoop();
+}
+function restartGame() {
+  score = 0;
+  lives = 3;
+  currentLevel = 0;
+  setupWorld();
+  document.getElementById("game-over-screen").classList.add("hidden");
+  isGameRunning = true;
+  cancelAnimationFrame(frameId);
+  gameLoop();
+}
 function mainAction() { restartGame(); }
 function exitGame() { window.close(); }
 document.addEventListener("keydown", e => { if (["ArrowLeft", "ArrowRight", "ArrowUp", " "].includes(e.key)) e.preventDefault(); keys[e.key] = true; });
@@ -162,7 +177,22 @@ movePlayer = function () {
   const wasGrounded = player.grounded; oldMovePlayer();
   if ((keys.ArrowUp || keys[" "]) && wasGrounded && player.dy < 0) { jumpSound.currentTime = 0; jumpSound.play(); }
 };
-function loseLife() { lives--; loseSound.currentTime = 0; loseSound.play(); if (lives <= 0) { isGameRunning = false; document.getElementById("game-over-message").innerText = "Game Over!"; document.getElementById("mainActionBtn").innerText = "Restart"; document.getElementById("game-over-screen").classList.remove("hidden"); saveHighScore(); return; } resetPlayer(); player.invulnerable = 90; showStatus("Lives left: " + lives); }
+function loseLife() {
+  lives--;
+  loseSound.currentTime = 0;
+  loseSound.play();
+  if (lives <= 0) {
+    isGameRunning = false;
+    document.getElementById("game-over-message").innerText = "Game Over!";
+    document.getElementById("mainActionBtn").innerText = "Restart";
+    document.getElementById("game-over-screen").classList.remove("hidden");
+    saveHighScore();
+    return;
+  }
+  resetPlayer();
+  player.invulnerable = 90;
+  showStatus("Lives left: " + lives);
+}
 const P = (x, y, width, height = 20, extra = {}) => ({ x, y, width, height, ...extra });
 const C = (x, y) => ({ x, y, width: 20, height: 20 });
 const G = (x, y, color) => ({ x, y, width: 22, height: 22, color });
@@ -508,3 +538,30 @@ drawEnemies = () => enemies.forEach(enemy => {
   const squash = enemy.defeated ? 0.55 : 1;
   ctx.drawImage(img, enemy.x, enemy.y + enemy.height * (1 - squash), enemy.width, enemy.height * squash);
 });
+
+function activateCheckpoint() {
+  if (!checkpoint || checkpoint.active) return;
+  checkpoint.active = true;
+  player.spawnX = checkpoint.spawnX;
+  player.spawnY = checkpoint.spawnY;
+  score += 10;
+  showStatus("checkpoint saved");
+}
+
+updateCheckpoint = () => {
+  if (player.invulnerable > 0) player.invulnerable--;
+  if (checkpoint && !checkpoint.active && touches(checkpoint)) activateCheckpoint();
+};
+
+drawCheckpoint = () => {
+  if (!checkpoint) return;
+  ctx.save();
+  ctx.globalAlpha = checkpoint.active ? 1 : 0.65;
+  ctx.drawImage(checkpointImage, checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
+  if (checkpoint.active) {
+    ctx.fillStyle = "white";
+    ctx.font = "12px Arial";
+    ctx.fillText("saved", checkpoint.x - 5, checkpoint.y - 6);
+  }
+  ctx.restore();
+};
