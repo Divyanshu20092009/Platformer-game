@@ -91,45 +91,9 @@ function updatePlayer() {
   platforms.forEach(p => { const bottom = player.y + player.height, inside = player.x < p.x + p.width && player.x + player.width > p.x; if (inside && oldBottom <= p.y && bottom >= p.y && player.dy >= 0) { player.y = p.y - player.height; player.dy = 0; player.jumping = false; player.grounded = true; player.standingPlatform = p; } });
   if (player.y > canvas.height + 80) handleFall();
 }
-function gameLoop() {
-  if (!isGameRunning || gamePaused) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  levelFrames++;
-  movePlayer();
-  updatePlatforms();
-  updatePlayer();
-  updateEnemies();
-  updateCollections();
-  updateCheckpoint();
-  updateGoal();
-  drawPlatforms();
-  drawEnemies();
-  drawObstacle();
-  drawCoins();
-  drawExtras();
-  drawCheckpoint();
-  drawGoal();
-  drawPlayer();
-  drawHud();
-  frameId = requestAnimationFrame(gameLoop);
-}
-function startGame() {
-  document.getElementById("start-screen").classList.add("hidden");
-  setupWorld();
-  isGameRunning = true;
-  cancelAnimationFrame(frameId);
-  gameLoop();
-}
-function restartGame() {
-  score = 0;
-  lives = 3;
-  currentLevel = 0;
-  setupWorld();
-  document.getElementById("game-over-screen").classList.add("hidden");
-  isGameRunning = true;
-  cancelAnimationFrame(frameId);
-  gameLoop();
-}
+function gameLoop() { if (!isGameRunning || gamePaused) return; ctx.clearRect(0, 0, canvas.width, canvas.height); levelFrames++; movePlayer(); updatePlatforms(); updatePlayer(); updateEnemies(); updateCollections(); updateCheckpoint(); updateGoal(); drawPlatforms(); drawEnemies(); drawObstacle(); drawCoins(); drawExtras(); drawCheckpoint(); drawGoal(); drawPlayer(); drawHud(); frameId = requestAnimationFrame(gameLoop); }
+function startGame() { document.getElementById("start-screen").classList.add("hidden"); setupWorld(); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); }
+function restartGame() { score = 0; lives = 3; currentLevel = 0; setupWorld(); document.getElementById("game-over-screen").classList.add("hidden"); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); }
 function mainAction() { restartGame(); }
 function exitGame() { window.close(); }
 document.addEventListener("keydown", e => { if (["ArrowLeft", "ArrowRight", "ArrowUp", " "].includes(e.key)) e.preventDefault(); keys[e.key] = true; });
@@ -150,19 +114,9 @@ function touches(item) {
     player.y < item.y + item.height &&
     player.y + player.height > item.y;
 }
-function showStatus(text) {
-  statusText = text;
-  statusFrames = 90;
-}
-function saveHighScore() {
-  if (score > highScore) {
-    highScore = score;
-    localStorage.setItem("platformerHighScore", highScore);
-  }
-}
-function collectedCoinCount() {
-  return coins.filter(coin => coin.collected).length;
-}
+function showStatus(text) { statusText = text; statusFrames = 90; }
+function saveHighScore() { if (score > highScore) { highScore = score; localStorage.setItem("platformerHighScore", highScore); } }
+function collectedCoinCount() { return coins.filter(c => c.collected).length; }
 coins = [
   { x: 100, y: 360, width: 20, height: 20, collected: false },
   { x: 200, y: 360, width: 20, height: 20, collected: false },
@@ -171,11 +125,7 @@ coins = [
 drawObstacle = () => {
   ctx.drawImage(treeImage, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
 };
-drawCoins = () => coins.forEach(coin => {
-  if (!coin.collected) {
-    ctx.drawImage(coinImage, coin.x, coin.y, coin.width, coin.height);
-  }
-});
+drawCoins = () => coins.forEach(c => { if (!c.collected) ctx.drawImage(coinImage, c.x, c.y, c.width, c.height); });
 drawGoal = () => {
   ctx.drawImage(flagImage, goal.x, goal.y, goal.width, goal.height);
 };
@@ -190,8 +140,7 @@ updateGoal = () => {
   document.getElementById("game-over-screen").classList.remove("hidden");
 };
 drawHud = () => {
-  ctx.fillStyle = "black";
-  ctx.font = "20px Arial";
+  ctx.fillStyle = "black"; ctx.font = "20px Arial";
   ctx.fillText("Score: " + score, 10, 20);
   ctx.fillText("High Score: " + highScore, 10, 40);
   ctx.fillText("Coins: " + collectedCoinCount() + "/" + coins.length, 10, 60);
@@ -199,26 +148,10 @@ drawHud = () => {
 };
 const oldMovePlayer = movePlayer;
 movePlayer = function () {
-  const wasGrounded = player.grounded;
-  oldMovePlayer();
+  const wasGrounded = player.grounded; oldMovePlayer();
   if ((keys.ArrowUp || keys[" "]) && wasGrounded && player.dy < 0) { jumpSound.currentTime = 0; jumpSound.play(); }
 };
-function loseLife() {
-  lives--;
-  loseSound.currentTime = 0;
-  loseSound.play();
-  if (lives <= 0) {
-    isGameRunning = false;
-    document.getElementById("game-over-message").innerText = "Game Over!";
-    document.getElementById("mainActionBtn").innerText = "Restart";
-    document.getElementById("game-over-screen").classList.remove("hidden");
-    saveHighScore();
-    return;
-  }
-  resetPlayer();
-  player.invulnerable = 90;
-  showStatus("Lives left: " + lives);
-}
+function loseLife() { lives--; loseSound.currentTime = 0; loseSound.play(); if (lives <= 0) { isGameRunning = false; document.getElementById("game-over-message").innerText = "Game Over!"; document.getElementById("mainActionBtn").innerText = "Restart"; document.getElementById("game-over-screen").classList.remove("hidden"); saveHighScore(); return; } resetPlayer(); player.invulnerable = 90; showStatus("Lives left: " + lives); }
 const P = (x, y, width, height = 20, extra = {}) => ({ x, y, width, height, ...extra });
 const C = (x, y) => ({ x, y, width: 20, height: 20 });
 const G = (x, y, color) => ({ x, y, width: 22, height: 22, color });
@@ -357,11 +290,6 @@ const oldDrawHud = drawHud;
 drawHud = () => { oldDrawHud(); ctx.font = "20px Arial"; ctx.fillText("Lives: " + lives, 10, 80); };
 
 document.addEventListener("keydown", e => {
-  if (e.key.toLowerCase() === "p" && isGameRunning) {
-    gamePaused = !gamePaused;
-    document.getElementById("pause-screen").classList.toggle("hidden", !gamePaused);
-    if (!gamePaused) gameLoop();
-  }
   if (e.key.toLowerCase() === "m") {
     muted = !muted;
     [coinSound, jumpSound, winSound, loseSound].forEach(s => s.muted = muted);
@@ -369,7 +297,7 @@ document.addEventListener("keydown", e => {
   }
 });
 
-function bindHoldButton(id, onDown, onUp){
+function bindHoldButton(id, onDown, onUp) {
   const btn = document.getElementById(id);
   const press = e => { e.preventDefault(); onDown(); };
   const release = e => { e.preventDefault(); onUp(); };
@@ -517,13 +445,72 @@ updateEnemies = () => enemies.forEach(enemy => {
   }
 });
 
-function defeatEnemy(enemy) {
-  enemy.defeated = true;
-  enemy.defeatFrames = 24;
-  player.dy = -7;
-  score += 15;
-  coinSound.currentTime = 0;
-  coinSound.play();
+drawCheckpoint = () => {
+  if (!checkpoint) return;
+  ctx.save();
+  ctx.globalAlpha = checkpoint.active ? 1 : 0.65;
+  ctx.drawImage(checkpointImage, checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
+  if (checkpoint.active) {
+    ctx.fillStyle = "white";
+    ctx.font = "12px Arial";
+    ctx.fillText("saved", checkpoint.x - 5, checkpoint.y - 6);
+  }
+  ctx.restore();
+};
+
+gameLoop = () => {
+  if (!isGameRunning || gamePaused) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  levelFrames++;
+  movePlayer();
+  updatePlatforms();
+  updatePlayer();
+  updateEnemies();
+  updateCollections();
+  updateCheckpoint();
+  updateHazard();
+  updateGoal();
+  drawPlatforms();
+  drawEnemies();
+  drawObstacle();
+  drawCoins();
+  drawExtras();
+  drawHazards();
+  drawCheckpoint();
+  drawGoal();
+  drawPlayer();
+  drawHud();
+  frameId = requestAnimationFrame(gameLoop);
+};
+
+let hazards = [];
+levels[0].hazards = [{ x: 600, y: 350, width: 30, height: 50, type: "cactus" }];
+levels[1].hazards = [{ x: 240, y: 390, width: 40, height: 110, type: "water" }, { x: 690, y: 210, width: 30, height: 40, type: "cactus" }];
+levels[2].hazards = [{ x: 180, y: 390, width: 50, height: 110, type: "water" }, { x: 650, y: 305, width: 30, height: 50, type: "cactus" }];
+levels[3].hazards = [{ x: 190, y: 390, width: 40, height: 110, type: "water" }, { x: 710, y: 210, width: 30, height: 50, type: "cactus" }];
+levels[4].hazards = [{ x: 190, y: 390, width: 45, height: 110, type: "water" }, { x: 690, y: 300, width: 30, height: 50, type: "cactus" }];
+
+const loadLevelBeforeHazards = loadLevel;
+loadLevel = index => {
+  loadLevelBeforeHazards(index);
+  hazards = (levels[index].hazards || []).map(item => ({ ...item }));
+};
+
+function updateHazard() {
+  hazards.forEach(hazard => {
+    if (!touches(hazard) || player.invulnerable > 0) return;
+    if (hazard.type === "water") {
+      loseLife();
+      return;
+    }
+    hurtPlayer(hazard);
+  });
+}
+
+function drawHazards() {
+  hazards.forEach(hazard => {
+    if (hazard.type === "cactus") ctx.drawImage(treeImage, hazard.x, hazard.y, hazard.width, hazard.height);
+  });
 }
 
 function hurtPlayer(enemy) {
@@ -544,81 +531,166 @@ function hurtPlayer(enemy) {
   }
 }
 
-updateEnemies = () => enemies.forEach(enemy => {
-  if (enemy.defeated) {
-    if (enemy.defeatFrames > 0) enemy.defeatFrames--;
-    return;
-  }
-  updateEnemyMovement(enemy);
-  if (!touches(enemy) || player.invulnerable > 0) return;
-  const playerBottom = player.y + player.height;
-  if (player.dy > 1 && playerBottom < enemy.y + enemy.height * 0.65) defeatEnemy(enemy);
-  else hurtPlayer(enemy);
-});
-
-drawEnemies = () => enemies.forEach(enemy => {
-  if (enemy.defeated && enemy.defeatFrames <= 0) return;
-  let img = enemy.type === "slime" ? slimeImage : enemy.type === "snail" ? snailImage : enemy.type === "fly" ? flyImage : enemyImage;
-  if (enemy.defeated && enemy.type === "slime") img = image("enemies/slimeDead.png");
-  if (enemy.defeated && enemy.type === "fish") img = image("enemies/fishDead.png");
-  const squash = enemy.defeated ? 0.55 : 1;
-  ctx.drawImage(img, enemy.x, enemy.y + enemy.height * (1 - squash), enemy.width, enemy.height * squash);
-});
-
-function activateCheckpoint() {
-  if (!checkpoint || checkpoint.active) return;
-  checkpoint.active = true;
-  player.spawnX = checkpoint.spawnX;
-  player.spawnY = checkpoint.spawnY;
-  score += 10;
-  showStatus("checkpoint saved");
+function formatTime(frames) {
+  const totalSeconds = frames / 60;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.floor(totalSeconds % 60).toString().padStart(2, "0");
+  const hundredths = Math.floor((frames % 60) * 100 / 60).toString().padStart(2, "0");
+  return minutes + ":" + seconds + "." + hundredths;
 }
 
-updateCheckpoint = () => {
-  if (player.invulnerable > 0) player.invulnerable--;
-  if (checkpoint && !checkpoint.active && touches(checkpoint)) activateCheckpoint();
+const drawHudBeforeTimer = drawHud;
+drawHud = () => {
+  drawHudBeforeTimer();
+  ctx.fillStyle = "black";
+  ctx.font = "18px Arial";
+  ctx.textAlign = "right";
+  ctx.fillText(currentLevelName(), canvas.width - 12, 22);
+  ctx.fillText("Time " + formatTime(levelFrames), canvas.width - 12, 44);
+  ctx.fillText("Par " + levels[currentLevel].par + "s", canvas.width - 12, 66);
+  ctx.textAlign = "left";
 };
 
-drawCheckpoint = () => {
-  if (!checkpoint) return;
-  ctx.save();
-  ctx.globalAlpha = checkpoint.active ? 1 : 0.65;
-  ctx.drawImage(checkpointImage, checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
-  if (checkpoint.active) {
-    ctx.fillStyle = "white";
-    ctx.font = "12px Arial";
-    ctx.fillText("saved", checkpoint.x - 5, checkpoint.y - 6);
+function setPaused(value) {
+  if (!isGameRunning && !gamePaused) return;
+  gamePaused = value;
+  document.getElementById("pause-screen").classList.toggle("hidden", !gamePaused);
+  if (!gamePaused && isGameRunning) {
+    cancelAnimationFrame(frameId);
+    gameLoop();
   }
-  ctx.restore();
-};
-
-let lockedGoalNotice = 0;
-
-function goalIsLocked() {
-  return !!(levelKey && !levelKey.collected);
 }
 
-updateGoal = () => {
-  if (!touches(goal)) return;
-  if (goalIsLocked()) {
-    if (lockedGoalNotice <= 0) {
-      showStatus("find the key first");
-      lockedGoalNotice = 90;
-    }
+function restartCurrentLevel() {
+  document.getElementById("paused-screen").classList.add("hidden");
+  gamePaused = false;
+  loadLevel(currentLevel);
+  isGameRunning = true;
+  cancelAnimationFrame(frameId);
+  gameLoop();
+}
+
+document.addEventListener("keydown", event => {
+  if (event.key.toLowerCase() === "p" && isGameRunning) setPaused(!gamePaused);
+});
+
+const difficultySettings = {
+  easy: { lives: 5, enemySpeed: 0.82 },
+  normal: { lives: 3, enemySpeed: 1 },
+  hard: { lives: 2, enemySpeed: 1.22 },
+};
+let difficulty = "normal";
+function setDifficulty(value) {
+  if (!difficultySettings[value]) return;
+  difficulty = value;
+  showStatus(value + " mode");
+}
+function startingLives() {
+  return difficultySettings[difficulty].lives;
+}
+updateEnemyMovement = enemy => {
+  const movement = enemyMovementType(enemy);
+  const speed = difficultySettings[difficulty].enemySpeed;
+  if (movement === "vertical") {
+    enemy.y += enemy.dy * speed;
+    if (enemy.y < enemy.minY || enemy.y + enemy.height > enemy.maxY) enemy.dy *= -1;
     return;
   }
-  finishLevel();
+  if (movement === "chase") {
+    const distance = player.x - enemy.x;
+    if (Math.abs(distance) < 190) enemy.dx = distance < 0 ? - 2.1 : 2.1;
+    patrolEnemy(enemy, speed);
+    return;
+  }
+  if (movement === "slow") {
+    patrolEnemy(enemy, 0.55 * speed);
+    return;
+  }
+  enemy.bob = (enemy.bob || 0) + 0.08;
+  enemy.y += Math.sin(enemy.bob) * 0.35;
+  patrolEnemy(enemy, speed);
+};
+startGame = () => {
+  document.getElementById("start-screen").classList.add("hidden");
+  document.getElementById("pause-screen").classList.add("hidden");
+  gamePaused = false;
+  lives = startingLives();
+  loadLevel(currentLevel);
+  isGameRunning = true;
+  cancelAnimationFrame(frameId);
+  gameLoop();
+};
+let unlockedLevel = Number(localStorage.getItem("platformerUnlockedLevel")) || 0;
+
+function unlockedLevel(index) {
+  const safeIndex = Math.min(index, levels.length - 1);
+  if (safeIndex <= unlockedLevel) return;
+  unlockedLevel = safeIndex;
+  localStorage.setItem("platfromUnlockedLevel", unlockedLevel);
+  renderLevelSelect();
+}
+function renderLevelSelect() {
+  const holder = document.getElementById("level-select");
+  let html = "";
+  levels.forEach((level, index) => {
+    const locked = index > unlockedLevel;
+    const selected = index === currentLevel ? "*" : "";
+    const disabled = locked ? 'disabled ' : '';
+    const action = 'onclick="chooseLevel(' + index + ')"';
+    const label = selected + (index + 1);
+    html += '<button ' + disabled + action + '>' + label + '</button>';
+  });
+  holder.innerHTML = html;
+}
+
+const finishLevelBeforeUnlock = finishLevel;
+finishLevel = () => {
+  if (currentLevel < levels.length - 1) {
+    unlockedLevel(currentLevel + 1);
+  }
+  finishLevelBeforeUnlock();
+};
+renderLevelSelect();
+
+let bestTimes = {};
+try{
+  const savedTimes = localStorage.getItem("platformerBestTimes");
+  const savedJson = savedTimes || "{}";
+  bestTimes = JSON.parse(savedJson);
+} catch (error){
+  bestTimes = {};
+}
+
+function recordBestTime(levelIndex, frames){
+  const oldTime = bestTimes[levelIndex];
+  if(oldTime !== undefined && oldTime <= frames) return;
+  bestTimes[levelIndex] = frames;
+  localStorage.setItem("platformBestTimes", JSON.stringify(bestTimes));
+}
+
+function bestTimeLabel(index){
+  if(bestTimes[index] === undefined) return "";
+  return " " + formatTime(bestTimes[index]);
+}
+
+renderLevelSelect = () =>{
+  const holder = document.getElementById("level-select");
+  let html = "";
+  levels.forEach((level, index) => {
+    const locked = index === currentLevel ? "*" : "";
+    const best = bestTimeLabel(index);
+    const disabled = locked ? 'disabled' : '';
+    const action = 'onclick="chooseLevel(' + index + ')"';
+    const label = selected + (index + 1) + best;
+    html += '<button ' + disabled + action + '>' + label + '</button>';
+  });
+  holder.innerHTML = html;
 };
 
-drawGoal = () => {
-  ctx.save();
-  ctx.globalAlpha = goalIsLocked() ? 0.45 : 1;
-  ctx.drawImage(flagImage, goal.x, goal.y, goal.width, goal.height);
-  ctx.restore();
-  if (goalIsLocked()) {
-    ctx.fillStyle = "black";
-    ctx.font = "15px Arial";
-    ctx.fillText("key", goal.x - 1, goal.y - 7);
-  }
-  if (lockedGoalNotice > 0) lockedGoalNotice--;
-};
+const finishLevelBeforeBestTime = finishLevel;
+finishlevel = () => {
+  recordBestTime(currentLevel,levelFrames);
+  finishLevelBeforeBestTime();
+  renderLevelSelect();
+}
+renderLevelSelect();

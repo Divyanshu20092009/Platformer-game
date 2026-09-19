@@ -55,3 +55,16 @@ canvas {
     padding: 9px 18px;
   }
 }
+
+#difficultySelect{
+  font: inherit;
+  padding: 6px 8px;
+  margin: 0 8px 12px;
+}
+#level-select{
+  margin: 8px 0 14px;
+}
+#level-select button{
+  margin: 3px;
+  padding: 5px 8px;
+}
