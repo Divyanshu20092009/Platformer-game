@@ -12,6 +12,13 @@
   <div id="start-screen" class="screen">
     <h1>Platformer Adventure</h1>
     <p>Arrow keys to move · Space to jump · P pause · M sound</p>
+    <label for="difficultSelect">Difficult</label>
+    <select id="difficultSelect" onchange="setDifficulty(this.value)">
+      <option value="easy">easy</option>
+      <option value="normal" selected>Normal</option>
+      <option value="hard">Hard</option>
+    </select>
+    <div id="level-select"></div>
     <button onclick="startGame()">Start</button>
     <button onclick="exitGame()">Exit</button>
   </div>

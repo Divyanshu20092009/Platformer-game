@@ -297,7 +297,7 @@ document.addEventListener("keydown", e => {
   }
 });
 
-function bindHoldButton(id, onDown, onUp){
+function bindHoldButton(id, onDown, onUp) {
   const btn = document.getElementById(id);
   const press = e => { e.preventDefault(); onDown(); };
   const release = e => { e.preventDefault(); onUp(); };
@@ -446,11 +446,11 @@ updateEnemies = () => enemies.forEach(enemy => {
 });
 
 drawCheckpoint = () => {
-  if(!checkpoint) return;
+  if (!checkpoint) return;
   ctx.save();
   ctx.globalAlpha = checkpoint.active ? 1 : 0.65;
   ctx.drawImage(checkpointImage, checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
-  if(checkpoint.active){
+  if (checkpoint.active) {
     ctx.fillStyle = "white";
     ctx.font = "12px Arial";
     ctx.fillText("saved", checkpoint.x - 5, checkpoint.y - 6);
@@ -459,7 +459,7 @@ drawCheckpoint = () => {
 };
 
 gameLoop = () => {
-  if(!isGameRunning || gamePaused) return;
+  if (!isGameRunning || gamePaused) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   levelFrames++;
   movePlayer();
@@ -496,10 +496,10 @@ loadLevel = index => {
   hazards = (levels[index].hazards || []).map(item => ({ ...item }));
 };
 
-function updateHazard(){
+function updateHazard() {
   hazards.forEach(hazard => {
-    if(!touches(hazard) || player.invulnerable > 0) return;
-    if(hazard.type === "water"){
+    if (!touches(hazard) || player.invulnerable > 0) return;
+    if (hazard.type === "water") {
       loseLife();
       return;
     }
@@ -507,14 +507,14 @@ function updateHazard(){
   });
 }
 
-function drawHazards(){
+function drawHazards() {
   hazards.forEach(hazard => {
-    if(hazard.type === "cactus") ctx.drawImage(treeImage, hazard.x, hazard.y, hazard.width, hazard.height);
+    if (hazard.type === "cactus") ctx.drawImage(treeImage, hazard.x, hazard.y, hazard.width, hazard.height);
   });
 }
 
-function hurtPlayer(enemy){
-  if(player.invulnerable > 0) return;
+function hurtPlayer(enemy) {
+  if (player.invulnerable > 0) return;
   lives--;
   player.invulnerable = 90;
   player.dy = -5;
@@ -522,7 +522,7 @@ function hurtPlayer(enemy){
   loseSound.currentTime = 0;
   loseSound.play();
   showStatus("Lives left: " + Math.max(0, lives));
-  if(lives <= 0){
+  if (lives <= 0) {
     isGameRunning = false;
     saveHighScore();
     document.getElementById("game-over-message").innerText = "Game Over!";
@@ -531,11 +531,11 @@ function hurtPlayer(enemy){
   }
 }
 
-function formatTime(frames){
+function formatTime(frames) {
   const totalSeconds = frames / 60;
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = Math.floor(totalSeconds % 60).toString().padStart(2, "0");
-  const hundredths  = Math.floor((frames % 60) * 100 / 60).toString().padStart(2, "0");
+  const hundredths = Math.floor((frames % 60) * 100 / 60).toString().padStart(2, "0");
   return minutes + ":" + seconds + "." + hundredths;
 }
 
@@ -551,17 +551,17 @@ drawHud = () => {
   ctx.textAlign = "left";
 };
 
-function setPaused(value){
-  if(!isGameRunning && !gamePaused) return;
+function setPaused(value) {
+  if (!isGameRunning && !gamePaused) return;
   gamePaused = value;
   document.getElementById("pause-screen").classList.toggle("hidden", !gamePaused);
-  if(!gamePaused && isGameRunning){
+  if (!gamePaused && isGameRunning) {
     cancelAnimationFrame(frameId);
     gameLoop();
   }
 }
 
-function restartCurrentLevel(){
+function restartCurrentLevel() {
   document.getElementById("paused-screen").classList.add("hidden");
   gamePaused = false;
   loadLevel(currentLevel);
@@ -571,5 +571,126 @@ function restartCurrentLevel(){
 }
 
 document.addEventListener("keydown", event => {
-  if(event.key.toLowerCase() === "p" && isGameRunning) setPaused(!gamePaused);
+  if (event.key.toLowerCase() === "p" && isGameRunning) setPaused(!gamePaused);
 });
+
+const difficultySettings = {
+  easy: { lives: 5, enemySpeed: 0.82 },
+  normal: { lives: 3, enemySpeed: 1 },
+  hard: { lives: 2, enemySpeed: 1.22 },
+};
+let difficulty = "normal";
+function setDifficulty(value) {
+  if (!difficultySettings[value]) return;
+  difficulty = value;
+  showStatus(value + " mode");
+}
+function startingLives() {
+  return difficultySettings[difficulty].lives;
+}
+updateEnemyMovement = enemy => {
+  const movement = enemyMovementType(enemy);
+  const speed = difficultySettings[difficulty].enemySpeed;
+  if (movement === "vertical") {
+    enemy.y += enemy.dy * speed;
+    if (enemy.y < enemy.minY || enemy.y + enemy.height > enemy.maxY) enemy.dy *= -1;
+    return;
+  }
+  if (movement === "chase") {
+    const distance = player.x - enemy.x;
+    if (Math.abs(distance) < 190) enemy.dx = distance < 0 ? - 2.1 : 2.1;
+    patrolEnemy(enemy, speed);
+    return;
+  }
+  if (movement === "slow") {
+    patrolEnemy(enemy, 0.55 * speed);
+    return;
+  }
+  enemy.bob = (enemy.bob || 0) + 0.08;
+  enemy.y += Math.sin(enemy.bob) * 0.35;
+  patrolEnemy(enemy, speed);
+};
+startGame = () => {
+  document.getElementById("start-screen").classList.add("hidden");
+  document.getElementById("pause-screen").classList.add("hidden");
+  gamePaused = false;
+  lives = startingLives();
+  loadLevel(currentLevel);
+  isGameRunning = true;
+  cancelAnimationFrame(frameId);
+  gameLoop();
+};
+let unlockedLevel = Number(localStorage.getItem("platformerUnlockedLevel")) || 0;
+
+function unlockedLevel(index) {
+  const safeIndex = Math.min(index, levels.length - 1);
+  if (safeIndex <= unlockedLevel) return;
+  unlockedLevel = safeIndex;
+  localStorage.setItem("platfromUnlockedLevel", unlockedLevel);
+  renderLevelSelect();
+}
+function renderLevelSelect() {
+  const holder = document.getElementById("level-select");
+  let html = "";
+  levels.forEach((level, index) => {
+    const locked = index > unlockedLevel;
+    const selected = index === currentLevel ? "*" : "";
+    const disabled = locked ? 'disabled ' : '';
+    const action = 'onclick="chooseLevel(' + index + ')"';
+    const label = selected + (index + 1);
+    html += '<button ' + disabled + action + '>' + label + '</button>';
+  });
+  holder.innerHTML = html;
+}
+
+const finishLevelBeforeUnlock = finishLevel;
+finishLevel = () => {
+  if (currentLevel < levels.length - 1) {
+    unlockedLevel(currentLevel + 1);
+  }
+  finishLevelBeforeUnlock();
+};
+renderLevelSelect();
+
+let bestTimes = {};
+try{
+  const savedTimes = localStorage.getItem("platformerBestTimes");
+  const savedJson = savedTimes || "{}";
+  bestTimes = JSON.parse(savedJson);
+} catch (error){
+  bestTimes = {};
+}
+
+function recordBestTime(levelIndex, frames){
+  const oldTime = bestTimes[levelIndex];
+  if(oldTime !== undefined && oldTime <= frames) return;
+  bestTimes[levelIndex] = frames;
+  localStorage.setItem("platformBestTimes", JSON.stringify(bestTimes));
+}
+
+function bestTimeLabel(index){
+  if(bestTimes[index] === undefined) return "";
+  return " " + formatTime(bestTimes[index]);
+}
+
+renderLevelSelect = () =>{
+  const holder = document.getElementById("level-select");
+  let html = "";
+  levels.forEach((level, index) => {
+    const locked = index === currentLevel ? "*" : "";
+    const best = bestTimeLabel(index);
+    const disabled = locked ? 'disabled' : '';
+    const action = 'onclick="chooseLevel(' + index + ')"';
+    const label = selected + (index + 1) + best;
+    html += '<button ' + disabled + action + '>' + label + '</button>';
+  });
+  holder.innerHTML = html;
+};
+
+const finishLevelBeforeBestTime = finishLevel;
+finishlevel = () => {
+  recordBestTime(currentLevel,levelFrames);
+  finishLevelBeforeBestTime();
+  renderLevelSelect();
+}
+renderLevelSelect();
