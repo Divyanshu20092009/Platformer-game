@@ -6,6 +6,12 @@ const jumpPower = 10;
 const image = src => {
   const img = new Image();
   img.src = src;
+  img.onerror = () => console.warn("Missing the image assets", src);
+  const rawDrawImage = ctx.drawImage.bind(ctx);
+  ctx.drawImage = (img, ...rest) => {
+    if(!img || !img.complete || img.naturalWidth === 0) return;
+    rawDrawImage(img, ...rest);
+  }
   return img;
 };
 
@@ -37,7 +43,7 @@ const player = {
 };
 let platforms = [{ x: 0, y: 400, width: 1000, height: 20 }];
 let enemies = [];
-let obstacle = { x: 600, y: 360, width: 30, height: 40 };
+// let obstacle = { x: 600, y: 360, width: 30, height: 40 };
 let coins = [];
 let gems = [];
 let levelKey = null;
@@ -60,7 +66,7 @@ let updateCollections = () => { };
 let updateCheckpoint = () => { };
 let updateGoal = () => { };
 let drawEnemies = () => { };
-let drawObstacle = () => { };
+// let drawObstacle = () => { };
 let drawCoins = () => { };
 let drawExtras = () => { };
 let drawCheckpoint = () => { };
@@ -95,7 +101,19 @@ function gameLoop() { if (!isGameRunning || gamePaused) return; ctx.clearRect(0,
 function startGame() { document.getElementById("start-screen").classList.add("hidden"); setupWorld(); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); }
 function restartGame() { score = 0; lives = 3; currentLevel = 0; setupWorld(); document.getElementById("game-over-screen").classList.add("hidden"); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); }
 function mainAction() { restartGame(); }
-function exitGame() { window.close(); }
+
+function exitGame() {
+  window.close();
+  setTimeout(() => {
+    isGameRunning = false;
+    cancelAnimationFrame(frameId);
+    document.getElementById("game-over-screen").classList.add("hidden");
+    document.getElementById("pause-screen").classList.add("hidden");
+    document.getElementById("start-screen").classList.remove("hidden");
+    showStatus("Thanks for playing the GAME - close the tab to EXIT")
+  }, 150);
+};
+
 document.addEventListener("keydown", e => {
   if (["ArrowLeft", "ArrowRight", "ArrowUp", " "].includes(e.key)) {
     e.preventDefault();
@@ -127,9 +145,6 @@ coins = [
   { x: 200, y: 360, width: 20, height: 20, collected: false },
   { x: 500, y: 220, width: 20, height: 20, collected: false }
 ];
-drawObstacle = () => {
-  ctx.drawImage(treeImage, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-};
 drawCoins = () => coins.forEach(c => { if (!c.collected) ctx.drawImage(coinImage, c.x, c.y, c.width, c.height); });
 drawGoal = () => {
   ctx.drawImage(flagImage, goal.x, goal.y, goal.width, goal.height);
@@ -194,7 +209,7 @@ levels.push({
   name: "Long Way Up", par: 45, start: { x: 60, y: 320 },
   platforms: [P(0, 400, 240), P(280, 350, 140), P(470, 300, 120), P(650, 250, 110), P(810, 205, 160), P(620, 130, 120), P(420, 100, 130)],
   enemies: [E(305, 320, 1.8, 280, 420), E(825, 175, 1.4, 810, 970, "slime")],
-  obstacle: P(690, 210, 30, 40), checkpoint: { x: 650, y: 90, width: 24, height: 40, spawnX: 640, spawnY: 50 },
+  checkpoint: { x: 650, y: 90, width: 24, height: 40, spawnX: 640, spawnY: 50 },
   coins: [C(120, 350), C(330, 310), C(500, 260), C(680, 210), C(850, 165), C(915, 165), C(660, 90), C(460, 60)],
   gems: [G(700, 90, "red"), G(430, 60, "yellow")], key: null, goal: P(500, 40, 30, 60)
 });
@@ -203,7 +218,6 @@ function loadLevel(index) {
   const level = levels[index]; currentLevel = index; levelFrames = 0;
   platforms = level.platforms.map(p => ({ ...p }));
   enemies = copyItems(level.enemies, "defeated");
-  obstacle = { ...level.obstacle };
   checkpoint = level.checkpoint ? { ...level.checkpoint, active: false } : null;
   coins = copyItems(level.coins, "collected");
   gems = copyItems(level.gems || [], "collected");
@@ -326,16 +340,16 @@ document.addEventListener("keydown", e => {
   }
 });
 
-function bindHoldButton(id, onDown, onUp) {
-  const btn = document.getElementById(id);
-  const press = e => { e.preventDefault(); onDown(); };
-  const release = e => { e.preventDefault(); onUp(); };
-  btn.addEventListener("touchstart", press);
-  btn.addEventListener("touchend", release);
-  btn.addEventListener("mousedown", press);
-  btn.addEventListener("mouseup", release);
-  btn.addEventListener("mouseleave", release);
-}
+// function bindHoldButton(id, onDown, onUp) {
+//   const btn = document.getElementById(id);
+//   const press = e => { e.preventDefault(); onDown(); };
+//   const release = e => { e.preventDefault(); onUp(); };
+//   btn.addEventListener("touchstart", press);
+//   btn.addEventListener("touchend", release);
+//   btn.addEventListener("mousedown", press);
+//   btn.addEventListener("mouseup", release);
+//   btn.addEventListener("mouseleave", release);
+// }
 bindHoldButton("leftBtn", () => keys["ArrowLeft"] = true, () => keys["ArrowLeft"] = false);
 bindHoldButton("rightBtn", () => keys["ArrowRight"] = true, () => keys["ArrowRight"] = false);
 bindHoldButton("jumpBtn", () => keys[" "] = true, () => keys[" "] = false);
@@ -380,7 +394,7 @@ function bindHoldButton(id, onDown, onUp){
   btn.addEventListener("pointerdown", press);
   btn.addEventListener("pointerup", release);
   btn.addEventListener("pointercancel", release);
-  btn.addEventListener("pointerleave");
+  btn.addEventListener("pointerleave", release);
 }
 
 function updatePlayerAnimation() {
@@ -534,7 +548,7 @@ gameLoop = () => {
   updateGoal();
   drawPlatforms();
   drawEnemies();
-  drawObstacle();
+  drawObstacle(), drawCoins();
   drawCoins();
   drawExtras();
   drawHazards();
@@ -773,6 +787,7 @@ drawGoal = () => {
   if (goalIsLocked()) {
     ctx.fillStyle = "black";
     ctx.font = "15px Arial";
+    const goalLabel = currentLevel === levels.length - 1 && boss && !boss.defeated ? "boss" : "key";
     ctx.fillText("key", goal.x - 1, goal.y - 7);
   }
 };
@@ -901,6 +916,68 @@ function resetInputWhenHidden(){
     resetInput();
   }
 }
+
+const bossImage = image("enemies/blockerMad.png");
+const bossHurtImage = image("enemies/blockerSad.png");
+let boss = null;
+function createBoss(){
+  boss = { x: 790, y: 232, width: 56, height: 56, dx: -1.6, minX: 620, maxY: 955, hp: 4, maxHP: 4, hurtFrames: 0, defeated: false };
+}
+
+function damageBoss(){
+  if(!boss || boss.defeated || boss.hurtFrames > 0) return;
+  boss.hp--;
+  boss.hurtFrames = 35;
+  player.dy = -8;
+  spawnParticles(boss.x + boss.width / 2, boss.y + boss.height / 2, "enemy", 12);
+  if(boss.hp <= 0){
+    boss.defeated = true;
+    score += 100;
+    showStatus("boss defeated");
+  }
+}
+
+function updateBoss(){
+  if(!boss || boss.defeated) return;
+  if(boss.hurtFrames > 0) boss.hurtFrames--;
+  const distance = player.x - boss.x;
+  if(Math.abs(distance) < 230) boss.dx = distance < 0 ? -2.1 : 2.1;
+  boss.x += boss.dx * difficultySettings[difficulty].enemySpeed;
+  if(boss.x < boss.minX || boss.x + boss.width > boss.maxX){
+    boss.dx *= -1;
+    boss.x = Math.max(boss.minX, Math.min(boss.maxX - boss.width, boss.x));
+  }
+  if(!touches(boss) || player.invulnerable > 0 || boss.hurtFrames > 0) return;
+  const playerBottom = player.y + player.height;
+  if(player.dy > 1 && playerBottom < boss.y + boss.height * 0.7) damageBoss();
+  else hurtPlayer(boss);
+}
+
+function drawBoss(){
+  if(!boss || boss.defeated) return
+  const picture = boss.hurtFrame > 0 ? bossHurtImage : bossImage;
+  ctx.drawImage(picture, boss.x, boss.y, boss.width, boss.height);
+  ctx.fillStyle = "black";
+  ctx.fillRect(canvas.width / 2 - 80, 12, 160, 8);
+  ctx.fillStyle = "white";
+  ctx.fillRect(canvas.width / 2 - 78, 14, 156 * boss.hp / boss.maxHP, 4);
+}
+
+const loadLevelBeforeBoss = loadLevel;
+loadLevel = index => {
+  loadLevelBeforeBoss(index);
+  if(index === levels.length - 1) createBoss();
+  else boss = null;
+};
+
+const updateEnemiesBeforeBoss = updateEnemies;
+updateEnemies = () => {
+  updateEnemiesBeforeBoss();
+  drawBoss();
+};
+
+const goalIsLockedBeforeBoss = goalIsLocked;
+goalIsLocked = () => goalIsLockedBeforeBoss() || !!(currentLevel === levels.length - 1 && boss && !boss.defeated);
 
 document.addEventListener("visibilitychange", resetInputWhenHidden);
 document.addEventListener("pointerup", releaseControlsIfNeeded);
