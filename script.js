@@ -367,6 +367,22 @@ updateGoal = () => {
   finishLevel();
 };
 
+function bindHoldButton(id, onDown, onUp){
+  const btn = document.getElementById(id);
+  const press = event => {
+    event.preventDefault();
+    onDown();
+  };
+  const release = event => {
+    event.preventDefault();
+    onUp();
+  };
+  btn.addEventListener("pointerdown", press);
+  btn.addEventListener("pointerup", release);
+  btn.addEventListener("pointercancel", release);
+  btn.addEventListener("pointerleave");
+}
+
 function updatePlayerAnimation() {
   if (player.invulnerable > 65) playerState = "hurt";
   else if (!player.grounded) playerState = "jump";
@@ -859,3 +875,34 @@ updatePlayer = () => {
   player.standingPlatform = null;
   updatePlayerBeforePlatformFix();
 };
+
+function resetInput(){
+  keys.ArrowLeft = false;
+  keys.ArrowRight = false;
+  keys.ArrowUp = false;
+  keys[" "] = false;
+  jumpHeld = false;
+  jumpBufferFrames = 0;
+}
+
+window.addEventListener("blur", resetInput);
+function releaseControlsIfNeeded(event){
+  const target = event.target;
+  if(!target || !target.closest){
+    resetInput();
+    return;
+  }
+  if(!target.closest(".mobile-controls")){
+    resetInput();
+  }
+}
+function resetInputWhenHidden(){
+  if(document.hidden){
+    resetInput();
+  }
+}
+
+document.addEventListener("visibilitychange", resetInputWhenHidden);
+document.addEventListener("pointerup", releaseControlsIfNeeded);
+document.addEventListener("pointercancel", resetInput);
+window.addEventListener("pagehide", resetInput);
