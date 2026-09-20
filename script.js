@@ -6,12 +6,6 @@ const jumpPower = 10;
 const image = src => {
   const img = new Image();
   img.src = src;
-  img.onerror = () => console.warn("Missing the image assets", src);
-  const rawDrawImage = ctx.drawImage.bind(ctx);
-  ctx.drawImage = (img, ...rest) => {
-    if (!img || !img.complete || img.naturalWidth === 0) return;
-    rawDrawImage(img, ...rest);
-  }
   return img;
 };
 
@@ -43,7 +37,7 @@ const player = {
 };
 let platforms = [{ x: 0, y: 400, width: 1000, height: 20 }];
 let enemies = [];
-// let obstacle = { x: 600, y: 360, width: 30, height: 40 };
+let obstacle = { x: 600, y: 360, width: 30, height: 40 };
 let coins = [];
 let gems = [];
 let levelKey = null;
@@ -66,7 +60,7 @@ let updateCollections = () => { };
 let updateCheckpoint = () => { };
 let updateGoal = () => { };
 let drawEnemies = () => { };
-// let drawObstacle = () => { };
+let drawObstacle = () => { };
 let drawCoins = () => { };
 let drawExtras = () => { };
 let drawCheckpoint = () => { };
@@ -91,47 +85,53 @@ function drawPlatforms() {
 function drawPlayer() {
   ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
 }
-
-function movePlayer() {
-  if ((keys.ArrowUp || keys[" "]) && player.grounded) {
-    player.dy = -jumpPower;
-    player.jumping = true;
-    player.grounded = false;
-  }
-  player.dx = keys.ArrowLeft && !keys.ArrowRight ? -moveSpeed : keys.ArrowRight && !keys.ArrowLeft ? moveSpeed : 0;
-}
-
+function movePlayer() { if ((keys.ArrowUp || keys[" "]) && player.grounded) { player.dy = -jumpPower; player.jumping = true; player.grounded = false; } player.dx = keys.ArrowLeft && !keys.ArrowRight ? -moveSpeed : keys.ArrowRight && !keys.ArrowLeft ? moveSpeed : 0; }
 function updatePlayer() {
-  const oldBottom = player.y + player.height;
-  player.x = Math.max(0, Math.min(canvas.width - player.width, player.x + player.dx)); player.y += player.dy;
-  player.dy += gravity;
-  player.grounded = false;
-  platforms.forEach(p => { const bottom = player.y + player.height, inside = player.x < p.x + p.width && player.x + player.width > p.x; if (inside && oldBottom <= p.y && bottom >= p.y && player.dy >= 0) {
-    player.y = p.y - player.height;
-    player.dy = 0;
-    player.jumping = false;
-    player.grounded = true;
-    player.standingPlatform = p;} });
-  if (player.y > canvas.height + 80 && player.invulnerable <= 0) handleFall();
+  const oldBottom = player.y + player.height; player.x = Math.max(0, Math.min(canvas.width - player.width, player.x + player.dx)); player.y += player.dy; player.dy += gravity; player.grounded = false;
+  platforms.forEach(p => { const bottom = player.y + player.height, inside = player.x < p.x + p.width && player.x + player.width > p.x; if (inside && oldBottom <= p.y && bottom >= p.y && player.dy >= 0) { player.y = p.y - player.height; player.dy = 0; player.jumping = false; player.grounded = true; player.standingPlatform = p; } });
+  if (player.y > canvas.height + 80) handleFall();
 }
-
-function gameLoop() { if (!isGameRunning || gamePaused) return; ctx.clearRect(0, 0, canvas.width, canvas.height); levelFrames++; movePlayer(); updatePlatforms(); updatePlayer(); updateEnemies(); updateCollections(); updateCheckpoint(); updateGoal(); drawPlatforms(); drawEnemies(); drawObstacle(); drawCoins(); drawExtras(); drawCheckpoint(); drawGoal(); drawPlayer(); drawHud(); frameId = requestAnimationFrame(gameLoop); }
-function startGame() { document.getElementById("start-screen").classList.add("hidden"); setupWorld(); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); }
-function restartGame() { score = 0; lives = 3; currentLevel = 0; setupWorld(); document.getElementById("game-over-screen").classList.add("hidden"); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); }
+function gameLoop() {
+  if (!isGameRunning || gamePaused) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  levelFrames++;
+  movePlayer();
+  updatePlatforms();
+  updatePlayer();
+  updateEnemies();
+  updateCollections();
+  updateCheckpoint();
+  updateGoal();
+  drawPlatforms();
+  drawEnemies();
+  drawObstacle();
+  drawCoins();
+  drawExtras();
+  drawCheckpoint();
+  drawGoal();
+  drawPlayer();
+  drawHud();
+  frameId = requestAnimationFrame(gameLoop);
+}
+function startGame() {
+  document.getElementById("start-screen").classList.add("hidden");
+  setupWorld();
+  isGameRunning = true;
+  cancelAnimationFrame(frameId);
+  gameLoop();
+}
+function restartGame() {
+  score = 0;
+  lives = 3;
+  currentLevel = 0;
+  setupWorld();
+  document.getElementById("game-over-screen").classList.add("hidden");
+  isGameRunning = true;
+  cancelAnimationFrame(frameId);
+  gameLoop();
+}
 function mainAction() { restartGame(); }
-
-function exitGame() {
-  window.close();
-  setTimeout(() => {
-    isGameRunning = false;
-    cancelAnimationFrame(frameId);
-    document.getElementById("game-over-screen").classList.add("hidden");
-    document.getElementById("pause-screen").classList.add("hidden");
-    document.getElementById("start-screen").classList.remove("hidden");
-    showStatus("Thanks for playing the GAME - close the tab to EXIT")
-  }, 150);
-};
-
+function exitGame() { window.close(); }
 document.addEventListener("keydown", e => {
   if (["ArrowLeft", "ArrowRight", "ArrowUp", " "].includes(e.key)) {
     e.preventDefault();
@@ -155,15 +155,32 @@ function touches(item) {
     player.y < item.y + item.height &&
     player.y + player.height > item.y;
 }
-function showStatus(text) { statusText = text; statusFrames = 90; }
-function saveHighScore() { if (score > highScore) { highScore = score; localStorage.setItem("platformerHighScore", highScore); } }
-function collectedCoinCount() { return coins.filter(c => c.collected).length; }
+function showStatus(text) {
+  statusText = text;
+  statusFrames = 90;
+}
+function saveHighScore() {
+  if (score > highScore) {
+    highScore = score;
+    localStorage.setItem("platformerHighScore", highScore);
+  }
+}
+function collectedCoinCount() {
+  return coins.filter(coin => coin.collected).length;
+}
 coins = [
   { x: 100, y: 360, width: 20, height: 20, collected: false },
   { x: 200, y: 360, width: 20, height: 20, collected: false },
   { x: 500, y: 220, width: 20, height: 20, collected: false }
 ];
-drawCoins = () => coins.forEach(c => { if (!c.collected) ctx.drawImage(coinImage, c.x, c.y, c.width, c.height); });
+drawObstacle = () => {
+  ctx.drawImage(treeImage, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+};
+drawCoins = () => coins.forEach(coin => {
+  if (!coin.collected) {
+    ctx.drawImage(coinImage, coin.x, coin.y, coin.width, coin.height);
+  }
+});
 drawGoal = () => {
   ctx.drawImage(flagImage, goal.x, goal.y, goal.width, goal.height);
 };
@@ -187,7 +204,8 @@ updateGoal = () => {
   document.getElementById("game-over-screen").classList.remove("hidden");
 };
 drawHud = () => {
-  ctx.fillStyle = "black"; ctx.font = "20px Arial";
+  ctx.fillStyle = "black";
+  ctx.font = "20px Arial";
   ctx.fillText("Score: " + score, 10, 20);
   ctx.fillText("High Score: " + highScore, 10, 40);
   ctx.fillText("Coins: " + collectedCoinCount() + "/" + coins.length, 10, 60);
@@ -203,15 +221,14 @@ const oldMovePlayer = movePlayer;
 movePlayer = function () {
   const wasGrounded = player.grounded;
   oldMovePlayer();
-
   if ((keys.ArrowUp || keys[" "]) && wasGrounded && player.dy < 0) {
     jumpSound.currentTime = 0;
     jumpSound.play();
   }
 };
-
 function loseLife() {
-  lives--; loseSound.currentTime = 0;
+  lives--;
+  loseSound.currentTime = 0;
   loseSound.play();
   if (lives <= 0) {
     isGameRunning = false;
@@ -221,10 +238,10 @@ function loseLife() {
     saveHighScore();
     return;
   }
-  resetPlayer(); player.invulnerable = 90;
+  resetPlayer();
+  player.invulnerable = 90;
   showStatus("Lives left: " + lives);
 }
-
 const P = (x, y, width, height = 20, extra = {}) => ({ x, y, width, height, ...extra });
 const C = (x, y) => ({ x, y, width: 20, height: 20 });
 const G = (x, y, color) => ({ x, y, width: 22, height: 22, color });
@@ -242,15 +259,18 @@ levels.push({
   name: "Long Way Up", par: 45, start: { x: 60, y: 320 },
   platforms: [P(0, 400, 240), P(280, 350, 140), P(470, 300, 120), P(650, 250, 110), P(810, 205, 160), P(620, 130, 120), P(420, 100, 130)],
   enemies: [E(305, 320, 1.8, 280, 420), E(825, 175, 1.4, 810, 970, "slime")],
-  checkpoint: { x: 650, y: 90, width: 24, height: 40, spawnX: 640, spawnY: 50 },
+  obstacle: P(690, 210, 30, 40), checkpoint: { x: 650, y: 90, width: 24, height: 40, spawnX: 640, spawnY: 50 },
   coins: [C(120, 350), C(330, 310), C(500, 260), C(680, 210), C(850, 165), C(915, 165), C(660, 90), C(460, 60)],
   gems: [G(700, 90, "red"), G(430, 60, "yellow")], key: null, goal: P(500, 40, 30, 60)
 });
 function copyItems(items, flag) { return items.map(item => ({ ...item, [flag]: false })); }
 function loadLevel(index) {
-  const level = levels[index]; currentLevel = index; levelFrames = 0;
+  const level = levels[index];
+  currentLevel = index;
+  levelFrames = 0;
   platforms = level.platforms.map(p => ({ ...p }));
   enemies = copyItems(level.enemies, "defeated");
+  obstacle = { ...level.obstacle };
   checkpoint = level.checkpoint ? { ...level.checkpoint, active: false } : null;
   coins = copyItems(level.coins, "collected");
   gems = copyItems(level.gems || [], "collected");
@@ -265,10 +285,24 @@ setupWorld = () => loadLevel(currentLevel);
 startGame = function () {
   document.getElementById("start-screen").classList.add("hidden");
   document.getElementById("pause-screen").classList.add("hidden");
-  gamePaused = false; lives = 3; loadLevel(currentLevel); isGameRunning = true;
-  cancelAnimationFrame(frameId); gameLoop();
+  gamePaused = false;
+  lives = 3;
+  loadLevel(currentLevel);
+  isGameRunning = true;
+  cancelAnimationFrame(frameId);
+  gameLoop();
 };
-restartGame = function () { score = 0; lives = 3; gamePaused = false; document.getElementById("pause-screen").classList.add("hidden"); loadLevel(0); document.getElementById("game-over-screen").classList.add("hidden"); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); };
+restartGame = function () {
+  score = 0;
+  lives = 3;
+  gamePaused = false;
+  document.getElementById("pause-screen").classList.add("hidden");
+  loadLevel(0);
+  document.getElementById("game-over-screen").classList.add("hidden");
+  isGameRunning = true;
+  cancelAnimationFrame(frameId);
+  gameLoop();
+};
 levels.push({
   name: "Broken Bridge", par: 50, start: { x: 40, y: 320 },
   platforms: [P(0, 400, 180), P(230, 360, 120), P(400, 315, 130), P(590, 355, 110), P(760, 300, 190), P(610, 210, 120), P(410, 165, 120), P(210, 115, 130)],
@@ -296,30 +330,53 @@ levels.push({
   key: { x: 725, y: 165, width: 24, height: 24 }, goal: P(70, 5, 30, 60)
 });
 function hasMoreLevels() { return currentLevel < levels.length - 1; }
-
 function levelPar() { return levels[currentLevel].par; }
-
 function finishLevel() {
-  score += 25; const seconds = Math.floor(levelFrames / 60);
-  if (seconds <= levelPar()) { score += 35; showStatus("Fast finish +35"); }
-  if (gems.length && gems.every(g => g.collected)) { score += 50; showStatus("All gems bonus +50"); }
-  saveHighScore(); isGameRunning = false; winSound.currentTime = 0; winSound.play();
+  score += 25;
+  const seconds = Math.floor(levelFrames / 60);
+  if (seconds <= levelPar()) {
+    score += 35;
+    showStatus("Fast finish +35");
+  }
+  if (gems.length && gems.every(g => g.collected)) {
+    score += 50;
+    showStatus("All gems bonus +50");
+  }
+  saveHighScore();
+  isGameRunning = false;
+  winSound.currentTime = 0;
+  winSound.play();
   const more = hasMoreLevels();
   document.getElementById("game-over-message").innerText = more ? "Level Complete!" : "Adventure Complete!";
   document.getElementById("mainActionBtn").innerText = more ? "Next Level" : "Play Again";
   document.getElementById("game-over-screen").classList.remove("hidden");
 }
-updateGoal = () => { if (levelKey && !levelKey.collected) return; if (touches(goal)) finishLevel(); };
-mainAction = function () { if (currentLevel < levels.length - 1 && !isGameRunning) { document.getElementById("game-over-screen").classList.add("hidden"); loadLevel(currentLevel + 1); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); return; } restartGame(); };
+updateGoal = () => {
+  if (levelKey && !levelKey.collected) return;
+  if (touches(goal)) finishLevel();
+};
+mainAction = function () {
+  if (currentLevel < levels.length - 1 && !isGameRunning) {
+    document.getElementById("game-over-screen").classList.add("hidden");
+    loadLevel(currentLevel + 1);
+    isGameRunning = true;
+    cancelAnimationFrame(frameId);
+    gameLoop();
+    return;
+  }
+  restartGame();
+};
 
 updatePlatforms = () => platforms.forEach(p => {
   if (p.dx !== undefined) {
-    const prevX = p.x; p.x += p.dx;
+    const prevX = p.x;
+    p.x += p.dx;
     if (p.x < p.minX || p.x > p.maxX) p.dx *= -1;
     if (player.standingPlatform === p) player.x += p.x - prevX;
   }
   if (p.dy !== undefined) {
-    const prevY = p.y; p.y += p.dy;
+    const prevY = p.y;
+    p.y += p.dy;
     if (p.y < p.minY || p.y > p.maxY) p.dy *= -1;
     if (player.standingPlatform === p) player.y += p.y - prevY;
   }
@@ -327,10 +384,22 @@ updatePlatforms = () => platforms.forEach(p => {
 
 updateEnemies = () => enemies.forEach(e => {
   if (e.defeated) return;
-  if (e.axis === "y") { e.y += e.dy; if (e.y < e.minY || e.y + e.height > e.maxY) e.dy *= -1; }
-  else { e.x += e.dx; if (e.x < e.minX || e.x + e.width > e.maxX) e.dx *= -1; }
+  if (e.axis === "y") {
+    e.y += e.dy;
+    if (e.y < e.minY || e.y + e.height > e.maxY) e.dy *= -1;
+  }
+  else {
+    e.x += e.dx;
+    if (e.x < e.minX || e.x + e.width > e.maxX) e.dx *= -1;
+  }
   if (!touches(e) || player.invulnerable > 0) return;
-  if (player.dy > 1 && player.y + player.height < e.y + 18) { e.defeated = true; player.dy = -7; score += 15; coinSound.currentTime = 0; coinSound.play(); }
+  if (player.dy > 1 && player.y + player.height < e.y + 18) {
+    e.defeated = true;
+    player.dy = -7;
+    score += 15;
+    coinSound.currentTime = 0;
+    coinSound.play();
+  }
   else loseLife();
 });
 
@@ -343,27 +412,55 @@ drawEnemies = () => enemies.forEach(e => {
 updateCheckpoint = () => {
   if (player.invulnerable > 0) player.invulnerable--;
   if (!checkpoint || checkpoint.active || !touches(checkpoint)) return;
-  checkpoint.active = true; player.spawnX = checkpoint.spawnX; player.spawnY = checkpoint.spawnY;
+  checkpoint.active = true;
+  player.spawnX = checkpoint.spawnX;
+  player.spawnY = checkpoint.spawnY;
   showStatus("checkpoint reached");
 };
 
-drawCheckpoint = () => { if (checkpoint) ctx.drawImage(checkpointImage, checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height); };
+drawCheckpoint = () => {
+  if (checkpoint) {
+    ctx.drawImage(checkpointImage, checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
+  }
+};
 
 drawExtras = () => {
-  gems.forEach(g => { if (!g.collected) ctx.drawImage(gemImages[g.color], g.x, g.y, g.width, g.height); });
-  if (levelKey && !levelKey.collected) ctx.drawImage(keyImage, levelKey.x, levelKey.y, levelKey.width, levelKey.height);
+  gems.forEach(g => {
+    if (!g.collected) {
+      ctx.drawImage(gemImages[g.color], g.x, g.y, g.width, g.height);
+    }
+  });
+  if (levelKey && !levelKey.collected) {
+    ctx.drawImage(keyImage, levelKey.x, levelKey.y, levelKey.width, levelKey.height);
+  }
 }
 
 const oldUpdateCollections = updateCollections;
 updateCollections = () => {
   oldUpdateCollections();
-  gems.forEach(g => { if (!g.collected && touches(g)) { g.collected = true; score += 15; coinSound.currentTime = 0; coinSound.play(); } });
-  if (levelKey && !levelKey.collected && touches(levelKey)) { levelKey.collected = true; showStatus("key collected"); coinSound.currentTime = 0; coinSound.play(); }
+  gems.forEach(g => {
+    if (!g.collected && touches(g)) {
+      g.collected = true;
+      score += 15;
+      coinSound.currentTime = 0;
+      coinSound.play();
+    }
+  });
+  if (levelKey && !levelKey.collected && touches(levelKey)) {
+    levelKey.collected = true;
+    showStatus("key collected");
+    coinSound.currentTime = 0;
+    coinSound.play();
+  }
 };
 handleFall = () => loseLife();
 
 const oldDrawHud = drawHud;
-drawHud = () => { oldDrawHud(); ctx.font = "20px Arial"; ctx.fillText("Lives: " + lives, 10, 80); };
+drawHud = () => {
+  oldDrawHud();
+  ctx.font = "20px Arial";
+  ctx.fillText("Lives: " + lives, 10, 80);
+};
 
 document.addEventListener("keydown", e => {
   if (e.key.toLowerCase() === "m") {
@@ -372,47 +469,6 @@ document.addEventListener("keydown", e => {
     showStatus(muted ? "sound off" : "sound on");
   }
 });
-
-// function bindHoldButton(id, onDown, onUp) {
-//   const btn = document.getElementById(id);
-//   const press = e => { e.preventDefault(); onDown(); };
-//   const release = e => { e.preventDefault(); onUp(); };
-//   btn.addEventListener("touchstart", press);
-//   btn.addEventListener("touchend", release);
-//   btn.addEventListener("mousedown", press);
-//   btn.addEventListener("mouseup", release);
-//   btn.addEventListener("mouseleave", release);
-// }
-bindHoldButton("leftBtn", () => keys["ArrowLeft"] = true, () => keys["ArrowLeft"] = false);
-bindHoldButton("rightBtn", () => keys["ArrowRight"] = true, () => keys["ArrowRight"] = false);
-bindHoldButton("jumpBtn", () => keys[" "] = true, () => keys[" "] = false);
-const walkFrames = [
-  image("p/p1_walk01.png"), image("p/p1_walk02.png"), image("p/p1_walk03.png"), image("p/p1_walk04.png"),
-  image("p/p1_walk05.png"), image("p/p1_walk06.png"), image("p/p1_walk07.png"), image("p/p1_walk08.png")
-];
-const jumpFrame = image("p/p1_jump.png");
-const hurtFrame = image("p/p1_hurt.png");
-let playerFacing = 1;
-let playerState = "idle";
-let playerFrame = 0;
-let playerFrameTick = 0;
-let lockedGoalNotice = 0;
-
-function goalIsLocked() {
-  return !!(levelKey && !levelKey.collected);
-}
-
-updateGoal = () => {
-  if (!touches(goal)) return;
-  if (goalIsLocked()) {
-    if (lockedGoalNotice <= 0) {
-      showStatus("find the key first...")
-      lockedGoalNotice = 90;
-    }
-    return;
-  }
-  finishLevel();
-};
 
 function bindHoldButton(id, onDown, onUp) {
   const btn = document.getElementById(id);
@@ -429,6 +485,19 @@ function bindHoldButton(id, onDown, onUp) {
   btn.addEventListener("pointercancel", release);
   btn.addEventListener("pointerleave", release);
 }
+bindHoldButton("leftBtn", () => keys["ArrowLeft"] = true, () => keys["ArrowLeft"] = false);
+bindHoldButton("rightBtn", () => keys["ArrowRight"] = true, () => keys["ArrowRight"] = false);
+bindHoldButton("jumpBtn", () => keys[" "] = true, () => keys[" "] = false);
+const walkFrames = [
+  image("p/p1_walk01.png"), image("p/p1_walk02.png"), image("p/p1_walk03.png"), image("p/p1_walk04.png"),
+  image("p/p1_walk05.png"), image("p/p1_walk06.png"), image("p/p1_walk07.png"), image("p/p1_walk08.png")
+];
+const jumpFrame = image("p/p1_jump.png");
+const hurtFrame = image("p/p1_hurt.png");
+let playerFacing = 1;
+let playerState = "idle";
+let playerFrame = 0;
+let playerFrameTick = 0;
 
 function updatePlayerAnimation() {
   if (player.invulnerable > 65) playerState = "hurt";
@@ -521,12 +590,16 @@ function updateEnemyMovement(enemy) {
   const movement = enemyMovementType(enemy);
   if (movement === "vertical") {
     enemy.y += enemy.dy;
-    if (enemy.y < enemy.minY || enemy.y + enemy.height > enemy.maxY) enemy.dy *= -1;
+    if (enemy.y < enemy.minY || enemy.y + enemy.height > enemy.maxY) {
+      enemy.dy *= -1;
+    }
     return;
   }
   if (movement === "chase") {
     const distance = player.x - enemy.x;
-    if (Math.abs(distance) < 190) enemy.dx = distance < 0 ? -2.1 : 2.1;
+    if (Math.abs(distance) < 190) {
+      enemy.dx = distance < 0 ? -2.1 : 2.1;
+    }
     patrolEnemy(enemy, 1);
     return;
   }
@@ -554,71 +627,13 @@ updateEnemies = () => enemies.forEach(enemy => {
   }
 });
 
-drawCheckpoint = () => {
-  if (!checkpoint) return;
-  ctx.save();
-  ctx.globalAlpha = checkpoint.active ? 1 : 0.65;
-  ctx.drawImage(checkpointImage, checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
-  if (checkpoint.active) {
-    ctx.fillStyle = "white";
-    ctx.font = "12px Arial";
-    ctx.fillText("saved", checkpoint.x - 5, checkpoint.y - 6);
-  }
-  ctx.restore();
-};
-
-gameLoop = () => {
-  if (!isGameRunning || gamePaused) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  levelFrames++;
-  movePlayer();
-  updatePlatforms();
-  updatePlayer();
-  updateEnemies();
-  updateCollections();
-  updateCheckpoint();
-  updateHazard();
-  updateGoal();
-  drawPlatforms();
-  drawEnemies();
-  drawCoins();
-  drawExtras();
-  drawHazards();
-  drawCheckpoint();
-  drawGoal();
-  drawPlayer();
-  drawHud();
-  frameId = requestAnimationFrame(gameLoop);
-};
-
-let hazards = [];
-levels[0].hazards = [{ x: 600, y: 350, width: 30, height: 50, type: "cactus" }];
-levels[1].hazards = [{ x: 240, y: 390, width: 40, height: 110, type: "water" }, { x: 690, y: 210, width: 30, height: 40, type: "cactus" }];
-levels[2].hazards = [{ x: 180, y: 390, width: 50, height: 110, type: "water" }, { x: 650, y: 305, width: 30, height: 50, type: "cactus" }];
-levels[3].hazards = [{ x: 190, y: 390, width: 40, height: 110, type: "water" }, { x: 710, y: 210, width: 30, height: 50, type: "cactus" }];
-levels[4].hazards = [{ x: 480, y: 390, width: 45, height: 110, type: "water" }, { x: 690, y: 300, width: 30, height: 50, type: "cactus" }];
-
-const loadLevelBeforeHazards = loadLevel;
-loadLevel = index => {
-  loadLevelBeforeHazards(index);
-  hazards = (levels[index].hazards || []).map(item => ({ ...item }));
-};
-
-function updateHazard() {
-  hazards.forEach(hazard => {
-    if (!touches(hazard) || player.invulnerable > 0) return;
-    if (hazard.type === "water") {
-      loseLife();
-      return;
-    }
-    hurtPlayer(hazard);
-  });
-}
-
-function drawHazards() {
-  hazards.forEach(hazard => {
-    if (hazard.type === "cactus") ctx.drawImage(treeImage, hazard.x, hazard.y, hazard.width, hazard.height);
-  });
+function defeatEnemy(enemy) {
+  enemy.defeated = true;
+  enemy.defeatFrames = 24;
+  player.dy = -7;
+  score += 15;
+  coinSound.currentTime = 0;
+  coinSound.play();
 }
 
 function hurtPlayer(enemy) {
@@ -639,177 +654,71 @@ function hurtPlayer(enemy) {
   }
 }
 
-function formatTime(frames) {
-  const totalSeconds = frames / 60;
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = Math.floor(totalSeconds % 60).toString().padStart(2, "0");
-  const hundredths = Math.floor((frames % 60) * 100 / 60).toString().padStart(2, "0");
-  return minutes + ":" + seconds + "." + hundredths;
-}
-
-const drawHudBeforeTimer = drawHud;
-drawHud = () => {
-  drawHudBeforeTimer();
-  ctx.fillStyle = "black";
-  ctx.font = "18px Arial";
-  ctx.textAlign = "right";
-  ctx.fillText(currentLevelName(), canvas.width - 12, 22);
-  ctx.fillText("Time " + formatTime(levelFrames), canvas.width - 12, 44);
-  ctx.fillText("Par " + levels[currentLevel].par + "s", canvas.width - 12, 66);
-  ctx.textAlign = "left";
-};
-
-function setPaused(value) {
-  if (!isGameRunning && !gamePaused) return;
-  gamePaused = value;
-  document.getElementById("pause-screen").classList.toggle("hidden", !gamePaused);
-  if (!gamePaused && isGameRunning) {
-    cancelAnimationFrame(frameId);
-    gameLoop();
+updateEnemies = () => enemies.forEach(enemy => {
+  if (enemy.defeated) {
+    if (enemy.defeatFrames > 0) enemy.defeatFrames--;
+    return;
   }
-}
-
-function restartCurrentLevel() {
-  document.getElementById("pause-screen").classList.add("hidden");
-  gamePaused = false;
-  loadLevel(currentLevel);
-  isGameRunning = true;
-  cancelAnimationFrame(frameId);
-  gameLoop();
-}
-
-document.addEventListener("keydown", event => {
-  if (event.key.toLowerCase() === "p" && isGameRunning) setPaused(!gamePaused);
+  updateEnemyMovement(enemy);
+  if (!touches(enemy) || player.invulnerable > 0) return;
+  const playerBottom = player.y + player.height;
+  if (player.dy > 1 && playerBottom < enemy.y + enemy.height * 0.65) defeatEnemy(enemy);
+  else hurtPlayer(enemy);
 });
 
-const difficultySettings = {
-  easy: { lives: 5, enemySpeed: 0.82 },
-  normal: { lives: 3, enemySpeed: 1 },
-  hard: { lives: 2, enemySpeed: 1.22 },
+drawEnemies = () => enemies.forEach(enemy => {
+  if (enemy.defeated && enemy.defeatFrames <= 0) return;
+  let img = enemy.type === "slime" ? slimeImage : enemy.type === "snail" ? snailImage : enemy.type === "fly" ? flyImage : enemyImage;
+  if (enemy.defeated && enemy.type === "slime") img = image("enemies/slimeDead.png");
+  if (enemy.defeated && enemy.type === "fish") img = image("enemies/fishDead.png");
+  const squash = enemy.defeated ? 0.55 : 1;
+  ctx.drawImage(img, enemy.x, enemy.y + enemy.height * (1 - squash), enemy.width, enemy.height * squash);
+});
+
+function activateCheckpoint() {
+  if (!checkpoint || checkpoint.active) return;
+  checkpoint.active = true;
+  player.spawnX = checkpoint.spawnX;
+  player.spawnY = checkpoint.spawnY;
+  score += 10;
+  showStatus("checkpoint saved");
+}
+
+updateCheckpoint = () => {
+  if (player.invulnerable > 0) player.invulnerable--;
+  if (checkpoint && !checkpoint.active && touches(checkpoint)) activateCheckpoint();
 };
-let difficulty = "normal";
-function setDifficulty(value) {
-  if (!difficultySettings[value]) return;
-  difficulty = value;
-  showStatus(value + " mode");
+
+drawCheckpoint = () => {
+  if (!checkpoint) return;
+  ctx.save();
+  ctx.globalAlpha = checkpoint.active ? 1 : 0.65;
+  ctx.drawImage(checkpointImage, checkpoint.x, checkpoint.y, checkpoint.width, checkpoint.height);
+  if (checkpoint.active) {
+    ctx.fillStyle = "white";
+    ctx.font = "12px Arial";
+    ctx.fillText("saved", checkpoint.x - 5, checkpoint.y - 6);
+  }
+  ctx.restore();
+};
+
+let lockedGoalNotice = 0;
+
+function goalIsLocked() {
+  return !!(levelKey && !levelKey.collected);
 }
-function startingLives() {
-  return difficultySettings[difficulty].lives;
-}
-updateEnemyMovement = enemy => {
-  const movement = enemyMovementType(enemy);
-  const speed = difficultySettings[difficulty].enemySpeed;
-  if (movement === "vertical") {
-    enemy.y += enemy.dy * speed;
-    if (enemy.y < enemy.minY || enemy.y + enemy.height > enemy.maxY) enemy.dy *= -1;
+
+updateGoal = () => {
+  if (!touches(goal)) return;
+  if (goalIsLocked()) {
+    if (lockedGoalNotice <= 0) {
+      showStatus("find the key first");
+      lockedGoalNotice = 90;
+    }
     return;
   }
-  if (movement === "chase") {
-    const distance = player.x - enemy.x;
-    if (Math.abs(distance) < 190) enemy.dx = distance < 0 ? - 2.1 : 2.1;
-    patrolEnemy(enemy, speed);
-    return;
-  }
-  if (movement === "slow") {
-    patrolEnemy(enemy, 0.55 * speed);
-    return;
-  }
-  enemy.bob = (enemy.bob || 0) + 0.08;
-  enemy.y += Math.sin(enemy.bob) * 0.35;
-  patrolEnemy(enemy, speed);
+  finishLevel();
 };
-startGame = () => {
-  document.getElementById("start-screen").classList.add("hidden");
-  document.getElementById("pause-screen").classList.add("hidden");
-  gamePaused = false;
-  lives = startingLives();
-  loadLevel(currentLevel);
-  isGameRunning = true;
-  cancelAnimationFrame(frameId);
-  gameLoop();
-};
-let unlockedLevel = Number(localStorage.getItem("platformerUnlockedLevel")) || 0;
-
-function unlockLevel(index) {
-  const safeIndex = Math.min(index, levels.length - 1);
-  if (safeIndex <= unlockedLevel) return;
-  unlockedLevel = safeIndex;
-  localStorage.setItem("platformerUnlockedLevel", unlockedLevel);
-  renderLevelSelect();
-}
-
-function chooseLevel(index) {
-  if (index < 0 || index >= levels.length) return;
-  if (index > unlockedLevel) return;
-  currentLevel = index;
-  renderLevelSelect();
-}
-function renderLevelSelect() {
-  const holder = document.getElementById("level-select");
-  let html = "";
-  levels.forEach((level, index) => {
-    const locked = index > unlockedLevel;
-    const selected = index === currentLevel ? "*" : "";
-    const disabled = locked ? 'disabled ' : '';
-    const action = 'onclick="chooseLevel(' + index + ')"';
-    const label = selected + (index + 1);
-    html += '<button ' + disabled + action + '>' + label + '</button>';
-  });
-  holder.innerHTML = html;
-}
-
-const finishLevelBeforeUnlock = finishLevel;
-finishLevel = () => {
-  if (currentLevel < levels.length - 1) {
-    unlockLevel(currentLevel + 1);
-  }
-  finishLevelBeforeUnlock();
-};
-renderLevelSelect();
-
-let bestTimes = {};
-try {
-  const savedTimes = localStorage.getItem("platformerBestTimes");
-  const savedJson = savedTimes || "{}";
-  bestTimes = JSON.parse(savedJson);
-} catch (error) {
-  bestTimes = {};
-}
-
-function recordBestTime(levelIndex, frames) {
-  const oldTime = bestTimes[levelIndex];
-  if (oldTime !== undefined && oldTime <= frames) return;
-  bestTimes[levelIndex] = frames;
-  localStorage.setItem("platformerBestTimes", JSON.stringify(bestTimes));
-}
-
-function bestTimeLabel(index) {
-  if (bestTimes[index] === undefined) return "";
-  return " " + formatTime(bestTimes[index]);
-}
-
-renderLevelSelect = () => {
-  const holder = document.getElementById("level-select");
-  let html = "";
-  levels.forEach((level, index) => {
-    const locked = index > unlockedLevel;
-    const selected = index === currentLevel ? "*" : "";
-    const best = bestTimeLabel(index);
-    const disabled = locked ? 'disabled' : '';
-    const action = 'onclick="chooseLevel(' + index + ')"';
-    const label = selected + (index + 1) + best;
-    html += '<button ' + disabled + action + '>' + label + '</button>';
-  });
-  holder.innerHTML = html;
-};
-
-const finishLevelBeforeBestTime = finishLevel;
-finishLevel = () => {
-  recordBestTime(currentLevel, levelFrames);
-  finishLevelBeforeBestTime();
-  renderLevelSelect();
-}
-renderLevelSelect();
 
 drawGoal = () => {
   ctx.save();
@@ -822,20 +731,29 @@ drawGoal = () => {
     const goalLabel = currentLevel === levels.length - 1 && boss && !boss.defeated ? "boss" : "key";
     ctx.fillText(goalLabel, goal.x - 1, goal.y - 7);
   }
+  if (lockedGoalNotice > 0) lockedGoalNotice--;
 };
 
 const redMushroomImage = image("collection/mushroomRed.png"), brownMushroomImage = image("collection/mushroomBrown.png");
 let powerUps = [], powerUpType = "", powerUpFrames = 0;
-function clearPowerUp() { powerUpType = ""; powerUpFrames = 0; }
+function clearPowerUp() {
+  powerUpType = "";
+  powerUpFrames = 0;
+}
 
 function applyPowerUp(type) {
-  powerUpType = type; powerUpFrames = 600;
+  powerUpType = type;
+  powerUpFrames = 600;
   showStatus(type === "red" ? "speed boost" : "jump boost");
 }
 
-function currentMoveSpeed() { return moveSpeed + (powerUpType === "red" && powerUpFrames > 0 ? 2 : 0); }
+function currentMoveSpeed() {
+  return moveSpeed + (powerUpType === "red" && powerUpFrames > 0 ? 2 : 0);
+}
 
-function currentJumpPower() { return jumpPower + (powerUpType === "brown" && powerUpFrames > 0 ? 3 : 0); }
+function currentJumpPower() {
+  return jumpPower + (powerUpType === "brown" && powerUpFrames > 0 ? 3 : 0);
+}
 
 levels[0].powerUps = [{ x: 725, y: 165, width: 28, height: 28, type: "red" }];
 levels[1].powerUps = [{ x: 530, y: 260, width: 28, height: 28, type: "brown" }];
@@ -861,7 +779,11 @@ updateCollections = () => {
       coinSound.play();
     }
   });
-  if (powerUpFrames > 0) powerUpFrames--; else if (powerUpType) clearPowerUp();
+  if (powerUpFrames > 0) {
+    powerUpFrames--;
+  } else if (powerUpType) {
+    clearPowerUp();
+  }
 };
 
 const drawExtrasBeforePowerUps = drawExtras;
@@ -923,6 +845,371 @@ updatePlayer = () => {
   updatePlayerBeforePlatformFix();
 };
 
+function updateFallingPlatform(platform) {
+  if (!platform.falling) return;
+  if (!platform.triggered && player.standingPlatform === platform) platform.fallTimer = (platform.fallTimer || 0) + 1;
+  if (!platform.triggered && platform.fallTimer >= (platform.fallDelay || 35)) platform.triggered = true;
+  if (platform.triggered) {
+    platform.dy = Math.min((platform.dy || 0) + 0.28, 7);
+    platform.y += platform.dy;
+  }
+}
+
+levels[1].platforms[3].falling = true;
+levels[1].platforms[3].fallDelay = 42;
+levels[2].platforms[3].falling = true;
+levels[2].platforms[3].fallDelay = 36;
+levels[4].platforms[6].falling = true;
+levels[4].platforms[6].fallDelay = 30;
+
+updatePlatforms = () => platforms.forEach(platform => {
+  platform.lastX = platform.x;
+  platform.lastY = platform.y;
+  if (platform.falling) {
+    updateFallingPlatform(platform);
+  } else {
+    if (platform.dx !== undefined) {
+      platform.x += platform.dx;
+      if (platform.x < platform.minX || platform.x > platform.maxX) {
+        platform.dx *= -1;
+        platform.x = Math.max(platform.minX, Math.min(platform.maxX, platform.x));
+      }
+    }
+    if (platform.dy !== undefined) {
+      platform.y += platform.dy;
+      if (platform.y < platform.minY || platform.y > platform.maxY) {
+        platform.dy *= -1;
+        platform.y = Math.max(platform.minY, Math.min(platform.maxY, platform.y));
+      }
+    }
+  }
+  if (player.standingPlatform === platform) carryPlayerWithPlatform(platform);
+});
+
+let hazards = [];
+levels[0].hazards = [{ x: 600, y: 350, width: 30, height: 50, type: "cactus" }];
+levels[1].hazards = [{ x: 240, y: 390, width: 40, height: 110, type: "water" }, { x: 690, y: 210, width: 30, height: 40, type: "cactus" }];
+levels[2].hazards = [{ x: 180, y: 390, width: 50, height: 110, type: "water" }, { x: 650, y: 305, width: 30, height: 50, type: "cactus" }];
+levels[3].hazards = [{ x: 190, y: 390, width: 40, height: 110, type: "water" }, { x: 710, y: 210, width: 30, height: 50, type: "cactus" }];
+levels[4].hazards = [{ x: 160, y: 390, width: 45, height: 110, type: "water" }, { x: 690, y: 300, width: 30, height: 50, type: "cactus" }];
+
+const loadLevelBeforeHazards = loadLevel;
+loadLevel = index => {
+  loadLevelBeforeHazards(index);
+  hazards = (levels[index].hazards || []).map(item => ({ ...item }));
+};
+
+function updateHazards() {
+  hazards.forEach(hazard => {
+    if (!touches(hazard) || player.invulnerable > 0) return;
+    if (hazard.type === "water") {
+      loseLife();
+      return;
+    }
+    hurtPlayer(hazard);
+  });
+}
+
+function drawHazards() {
+  hazards.forEach(hazard => {
+    if (hazard.type === "cactus") ctx.drawImage(treeImage, hazard.x, hazard.y, hazard.width, hazard.height);
+  });
+}
+
+gameLoop = () => {
+  if (!isGameRunning || gamePaused) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  levelFrames++;
+  movePlayer();
+  updatePlatforms();
+  updatePlayer();
+  updateEnemies();
+  updateCollections();
+  updateCheckpoint();
+  updateHazards();
+  updateGoal();
+  drawPlatforms();
+  drawEnemies();
+  drawObstacle();
+  drawCoins();
+  drawExtras();
+  drawHazards();
+  drawCheckpoint();
+  drawGoal();
+  drawPlayer();
+  drawHud();
+  frameId = requestAnimationFrame(gameLoop);
+};
+
+function formatTime(frames) {
+  const totalSeconds = frames / 60;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.floor(totalSeconds % 60).toString().padStart(2, "0");
+  const hundredths = Math.floor((frames % 60) * 100 / 60).toString().padStart(2, "0");
+  return minutes + ":" + seconds + "." + hundredths;
+}
+
+const drawHudWithLives = drawHud;
+drawHud = () => {
+  drawHudWithLives();
+  ctx.fillStyle = "black";
+  ctx.font = "18px Arial";
+  ctx.textAlign = "right";
+  ctx.fillText(currentLevelName(), canvas.width - 12, 22);
+  ctx.fillText("Time " + formatTime(levelFrames), canvas.width - 12, 44);
+  ctx.fillText("Par " + levels[currentLevel].par + "s", canvas.width - 12, 66);
+  ctx.textAlign = "left";
+};
+
+function setPaused(value) {
+  if (!isGameRunning && !gamePaused) return;
+  gamePaused = value;
+  document.getElementById("pause-screen").classList.toggle("hidden", !gamePaused);
+  if (!gamePaused && isGameRunning) {
+    cancelAnimationFrame(frameId);
+    gameLoop();
+  }
+}
+
+function restartCurrentLevel() {
+  document.getElementById("pause-screen").classList.add("hidden");
+  gamePaused = false;
+  loadLevel(currentLevel);
+  isGameRunning = true;
+  cancelAnimationFrame(frameId);
+  gameLoop();
+}
+
+document.addEventListener("keydown", event => {
+  if (event.key.toLowerCase() === "p" && isGameRunning) {
+    setPaused(!gamePaused);
+  }
+});
+const difficultySettings = {
+  easy: { lives: 5, enemySpeed: 0.82 },
+  normal: { lives: 3, enemySpeed: 1 },
+  hard: { lives: 2, enemySpeed: 1.22 }
+};
+let difficulty = "normal";
+function setDifficulty(value) {
+  if (!difficultySettings[value]) {
+    return;
+  }
+  difficulty = value;
+  showStatus(value + " mode");
+}
+function startingLives() {
+  return difficultySettings[difficulty].lives;
+}
+updateEnemyMovement = enemy => {
+  const movement = enemyMovementType(enemy);
+  const speed = difficultySettings[difficulty].enemySpeed;
+  if (movement === "vertical") {
+    enemy.y += enemy.dy * speed;
+    if (enemy.y < enemy.minY || enemy.y + enemy.height > enemy.maxY) enemy.dy *= -1;
+    return;
+  }
+  if (movement === "chase") {
+    const distance = player.x - enemy.x;
+    if (Math.abs(distance) < 190) enemy.dx = distance < 0 ? -2.1 : 2.1;
+    patrolEnemy(enemy, speed);
+    return;
+  }
+  if (movement === "slow") {
+    patrolEnemy(enemy, 0.55 * speed);
+    return;
+  }
+  enemy.bob = (enemy.bob || 0) + 0.08;
+  enemy.y += Math.sin(enemy.bob) * 0.35;
+  patrolEnemy(enemy, speed);
+};
+startGame = () => {
+  document.getElementById("start-screen").classList.add("hidden");
+  document.getElementById("pause-screen").classList.add("hidden");
+  gamePaused = false;
+  lives = startingLives();
+  loadLevel(currentLevel);
+  isGameRunning = true;
+  cancelAnimationFrame(frameId);
+  gameLoop();
+};
+restartGame = () => {
+  score = 0;
+  lives = startingLives();
+  gamePaused = false;
+  currentLevel = 0;
+  document.getElementById("pause-screen").classList.add("hidden");
+  document.getElementById("game-over-screen").classList.add("hidden");
+  loadLevel(0);
+  isGameRunning = true;
+  cancelAnimationFrame(frameId);
+  gameLoop();
+};
+
+let unlockedLevel = Number(localStorage.getItem("platformerUnlockedLevel")) || 0;
+
+function unlockLevel(index) {
+  const safeIndex = Math.min(index, levels.length - 1);
+  if (safeIndex <= unlockedLevel) {
+    return;
+  }
+  unlockedLevel = safeIndex;
+  localStorage.setItem("platformerUnlockedLevel", unlockedLevel);
+  renderLevelSelect();
+}
+
+function chooseLevel(index) {
+  if (index < 0 || index >= levels.length) {
+    return;
+  }
+  if (index > unlockedLevel) {
+    return;
+  }
+  currentLevel = index;
+  renderLevelSelect();
+}
+
+function renderLevelSelect() {
+  const holder = document.getElementById("level-select");
+  let html = "";
+  levels.forEach((level, index) => {
+    const locked = index > unlockedLevel;
+    const selected = index === currentLevel ? "*" : "";
+    const disabled = locked ? 'disabled ' : '';
+    const action = 'onclick="chooseLevel(' + index + ')"';
+    const label = selected + (index + 1);
+    html += '<button ' + disabled + action + '>' + label + '</button>';
+  });
+  holder.innerHTML = html;
+}
+
+const finishLevelBeforeUnlock = finishLevel;
+finishLevel = () => {
+  if (currentLevel < levels.length - 1) {
+    unlockLevel(currentLevel + 1);
+  }
+  finishLevelBeforeUnlock();
+};
+
+renderLevelSelect();
+
+let bestTimes = {};
+try {
+  const savedTimes = localStorage.getItem("platformerBestTimes");
+  const savedJson = savedTimes || "{}";
+  bestTimes = JSON.parse(savedJson);
+} catch (error) {
+  bestTimes = {};
+}
+
+function recordBestTime(levelIndex, frames) {
+  const oldTime = bestTimes[levelIndex];
+  if (oldTime !== undefined && oldTime <= frames) {
+    return;
+  }
+  bestTimes[levelIndex] = frames;
+  localStorage.setItem("platformerBestTimes", JSON.stringify(bestTimes));
+}
+
+function bestTimeLabel(index) {
+  if (bestTimes[index] === undefined) {
+    return "";
+  }
+  return " " + formatTime(bestTimes[index]);
+}
+
+renderLevelSelect = () => {
+  const holder = document.getElementById("level-select");
+  let html = "";
+  levels.forEach((level, index) => {
+    const locked = index > unlockedLevel;
+    const selected = index === currentLevel ? "*" : "";
+    const best = bestTimeLabel(index);
+    const disabled = locked ? 'disabled ' : '';
+    const action = 'onclick="chooseLevel(' + index + ')"';
+    const label = selected + (index + 1) + best;
+    html += '<button ' + disabled + action + '>' + label + '</button>';
+  });
+  holder.innerHTML = html;
+};
+
+const finishLevelBeforeBestTime = finishLevel;
+finishLevel = () => {
+  recordBestTime(currentLevel, levelFrames);
+  finishLevelBeforeBestTime();
+  renderLevelSelect();
+};
+
+renderLevelSelect();
+
+let particles = [];
+function spawnParticles(x, y, type, count = 6) {
+  for (let i = 0; i < count; i++) {
+    const particle = { x, y, dx: (Math.random() - 0.5) * 3, dy: -1 - Math.random() * 2, life: 28 + Math.floor(Math.random() * 12), type };
+    particles.push(particle);
+  }
+}
+function updateParticles() {
+  particles.forEach(particle => {
+    particle.x += particle.dx; particle.y += particle.dy;
+    particle.dy += 0.08; particle.life--;
+  });
+  particles = particles.filter(particle => particle.life > 0);
+}
+function drawParticles() {
+  particles.forEach(particle => {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, particle.life / 18);
+    ctx.fillStyle = particle.type === "hurt" ? "white" : particle.type === "enemy" ? "black" : "gold";
+    ctx.fillRect(particle.x, particle.y, 4, 4);
+    ctx.restore();
+  });
+}
+const updateCollectionsBeforeParticles = updateCollections;
+updateCollections = () => {
+  const beforeCoins = collectedCoinCount();
+  const beforeGems = gems.filter(gem => gem.collected).length;
+  updateCollectionsBeforeParticles();
+  if (collectedCoinCount() > beforeCoins) spawnParticles(player.x + player.width / 2, player.y + 18, "coin", 7);
+  if (gems.filter(gem => gem.collected).length > beforeGems) spawnParticles(player.x + player.width / 2, player.y + 18, "coin", 9);
+};
+const defeatEnemyBeforeParticles = defeatEnemy;
+defeatEnemy = enemy => {
+  spawnParticles(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, "enemy", 8);
+  defeatEnemyBeforeParticles(enemy);
+};
+const hurtPlayerBeforeParticles = hurtPlayer;
+hurtPlayer = enemy => {
+  if (player.invulnerable <= 0) spawnParticles(player.x + player.width / 2, player.y + 20, "hurt", 8);
+  hurtPlayerBeforeParticles(enemy);
+};
+gameLoop = () => {
+  if (!isGameRunning || gamePaused) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  levelFrames++;
+  movePlayer();
+  updatePlatforms();
+  updatePlayer();
+  updateEnemies();
+  updateCollections();
+  updateCheckpoint();
+  updateHazards();
+  updateParticles();
+  updateGoal();
+  drawPlatforms();
+  drawEnemies();
+  drawObstacle();
+  drawCoins();
+  drawExtras();
+  drawHazards();
+  drawCheckpoint();
+  drawGoal();
+  drawParticles();
+  drawPlayer();
+  drawHud();
+  frameId = requestAnimationFrame(gameLoop);
+};
+
 function resetInput() {
   keys.ArrowLeft = false;
   keys.ArrowRight = false;
@@ -943,23 +1230,38 @@ function releaseControlsIfNeeded(event) {
     resetInput();
   }
 }
+
 function resetInputWhenHidden() {
   if (document.hidden) {
     resetInput();
   }
 }
 
+document.addEventListener("visibilitychange", resetInputWhenHidden);
+document.addEventListener("pointerup", releaseControlsIfNeeded);
+document.addEventListener("pointercancel", resetInput);
+window.addEventListener("pagehide", resetInput);
+
 const bossImage = image("enemies/blockerMad.png");
 const bossHurtImage = image("enemies/blockerSad.png");
 let boss = null;
 function createBoss() {
-  boss = { x: 790, y: 232, width: 56, height: 56, dx: -1.6, minX: 620, maxX: 955, hp: 4, maxHP: 4, hurtFrames: 0, defeated: false };
+  boss = {
+    x: 790, y: 232, width: 56, height: 56,
+    dx: -1.6, minX: 620, maxX: 955,
+    hp: 4, maxHp: 4, hurtFrames: 0,
+    attackTimer: 90, chargeFrames: 0,
+    restFrames: 0, defeated: false
+  };
 }
 
 function damageBoss() {
   if (!boss || boss.defeated || boss.hurtFrames > 0) return;
   boss.hp--;
   boss.hurtFrames = 35;
+  boss.chargeFrames = 0;
+  boss.restFrames = 24;
+  boss.attackTimer = 90;
   player.dy = -8;
   spawnParticles(boss.x + boss.width / 2, boss.y + boss.height / 2, "enemy", 12);
   if (boss.hp <= 0) {
@@ -972,13 +1274,60 @@ function damageBoss() {
 function updateBoss() {
   if (!boss || boss.defeated) return;
   if (boss.hurtFrames > 0) boss.hurtFrames--;
+
+  if (boss.restFrames > 0) {
+    boss.restFrames--;
+    return checkBossHit();
+  }
+
   const distance = player.x - boss.x;
-  if (Math.abs(distance) < 230) boss.dx = distance < 0 ? -2.1 : 2.1;
-  boss.x += boss.dx * difficultySettings[difficulty].enemySpeed;
+  const secondPhase = boss.hp <= boss.maxHp / 2;
+  if (secondPhase && boss.chargeFrames <= 0) {
+    boss.attackTimer--;
+    if (boss.attackTimer <= 0) {
+      boss.chargeFrames = 28;
+      boss.dx = distance < 0 ? -5.2 : 5.2;
+      showStatus("boss charging");
+    }
+  }
+
+  if (boss.chargeFrames > 0) {
+    boss.chargeFrames--;
+    if (boss.chargeFrames % 6 === 0) spawnBossDust();
+    if (boss.chargeFrames === 0) {
+      boss.restFrames = 30;
+      boss.attackTimer = 105;
+    }
+  } else if (Math.abs(distance) < 230) {
+    boss.dx = distance < 0 ? -2.1 : 2.1;
+  }
+
+  const phaseSpeed = secondPhase ? 1.15 : 1;
+  boss.x += boss.dx * difficultySettings[difficulty].enemySpeed * phaseSpeed;
   if (boss.x < boss.minX || boss.x + boss.width > boss.maxX) {
     boss.dx *= -1;
     boss.x = Math.max(boss.minX, Math.min(boss.maxX - boss.width, boss.x));
+    if (boss.chargeFrames > 0) {
+      boss.chargeFrames = 0;
+      boss.restFrames = 35;
+      boss.attackTimer = 105;
+    }
   }
+  checkBossHit();
+}
+
+function spawnBossDust() {
+  const side = boss.dx < 0 ? boss.x + boss.width : boss.x;
+  for (let i = 0; i < 2; i++) {
+    particles.push({
+      x: side, y: boss.y + boss.height - 5,
+      dx: -boss.dx * 0.12, dy: -Math.random(),
+      life: 18, type: "enemy"
+    });
+  }
+}
+
+function checkBossHit() {
   if (!touches(boss) || player.invulnerable > 0 || boss.hurtFrames > 0) return;
   const playerBottom = player.y + player.height;
   if (player.dy > 1 && playerBottom < boss.y + boss.height * 0.7) damageBoss();
@@ -986,13 +1335,20 @@ function updateBoss() {
 }
 
 function drawBoss() {
-  if (!boss || boss.defeated) return
+  if (!boss || boss.defeated) return;
   const picture = boss.hurtFrames > 0 ? bossHurtImage : bossImage;
+  if (boss.hp <= boss.maxHp / 2 && boss.attackTimer < 25 && boss.chargeFrames <= 0) {
+    ctx.save();
+    ctx.globalAlpha = 0.35 + Math.sin(levelFrames * 0.4) * 0.2;
+    ctx.fillStyle = "white";
+    ctx.fillRect(boss.x - 5, boss.y - 5, boss.width + 10, boss.height + 10);
+    ctx.restore();
+  }
   ctx.drawImage(picture, boss.x, boss.y, boss.width, boss.height);
   ctx.fillStyle = "black";
   ctx.fillRect(canvas.width / 2 - 80, 12, 160, 8);
-  ctx.fillStyle = "white";
-  ctx.fillRect(canvas.width / 2 - 78, 14, 156 * boss.hp / boss.maxHP, 4);
+  ctx.fillStyle = boss.hp <= boss.maxHp / 2 ? "orange" : "white";
+  ctx.fillRect(canvas.width / 2 - 78, 14, 156 * boss.hp / boss.maxHp, 4);
 }
 
 const loadLevelBeforeBoss = loadLevel;
@@ -1001,7 +1357,6 @@ loadLevel = index => {
   if (index === levels.length - 1) createBoss();
   else boss = null;
 };
-
 const updateEnemiesBeforeBoss = updateEnemies;
 updateEnemies = () => {
   updateEnemiesBeforeBoss();
@@ -1012,12 +1367,7 @@ const drawEnemiesBeforeBoss = drawEnemies;
 drawEnemies = () => {
   drawEnemiesBeforeBoss();
   drawBoss();
-}
+};
 
 const goalIsLockedBeforeBoss = goalIsLocked;
 goalIsLocked = () => goalIsLockedBeforeBoss() || !!(currentLevel === levels.length - 1 && boss && !boss.defeated);
-
-document.addEventListener("visibilitychange", resetInputWhenHidden);
-document.addEventListener("pointerup", releaseControlsIfNeeded);
-document.addEventListener("pointercancel", resetInput);
-window.addEventListener("pagehide", resetInput);
