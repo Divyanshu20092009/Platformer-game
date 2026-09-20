@@ -1,13 +1,18 @@
 # Platformer Game
-A browser-based 2D platformer built with vanilla JavaScript and HTML and canvas API - no fremework, no build step etc.
+A browser based 2D platformer built with vanilla JavaScript and HTML and canvas API - no fremework, no build step etc.
 
 Run, jump and climb though 5 hand-built levels, collecting coins and gems and dodging or stomping enemy and racing a par time to reach the goal flag. some of the levels are lock the goal behind the keys and you have to find it first.
 
 ## Screenshots and Demo
 
 
+https://github.com/user-attachments/assets/26ed4d29-0af3-4647-98de-2f08afe73b73
+
+
+
+
 ## Features
-- Gravity-based physics with var jump heights.
+- Gravity based physics with var jump heights.
 - Coyote time.
 - jump buffering.
 - Directional sprite.
@@ -20,7 +25,6 @@ Run, jump and climb though 5 hand-built levels, collecting coins and gems and do
 
 - And touch devices you will see arrows on the screen itself to respond when u click them.
 
-## File Structure
 
 
 
@@ -40,9 +44,7 @@ Each level has its own layout, hazard, enemy set, and par time. Level 2 to 5 inc
 - Coins
 - Gems
 - keys
-- Power-ups
+- Power ups
 
-## Run it Locally
-Just open the `index.html` in the browser, or use statis server(best is browser one via LIVE SERVER extension) so relative asset paths resolve correctly.
 
-Made By Divyanshu and Baishu with 💖.
+Made By Divyanshu and Baishu with 💖. ( YES TRUE )
