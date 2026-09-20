@@ -9,7 +9,7 @@ const image = src => {
   img.onerror = () => console.warn("Missing the image assets", src);
   const rawDrawImage = ctx.drawImage.bind(ctx);
   ctx.drawImage = (img, ...rest) => {
-    if(!img || !img.complete || img.naturalWidth === 0) return;
+    if (!img || !img.complete || img.naturalWidth === 0) return;
     rawDrawImage(img, ...rest);
   }
   return img;
@@ -91,12 +91,30 @@ function drawPlatforms() {
 function drawPlayer() {
   ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
 }
-function movePlayer() { if ((keys.ArrowUp || keys[" "]) && player.grounded) { player.dy = -jumpPower; player.jumping = true; player.grounded = false; } player.dx = keys.ArrowLeft && !keys.ArrowRight ? -moveSpeed : keys.ArrowRight && !keys.ArrowLeft ? moveSpeed : 0; }
-function updatePlayer() {
-  const oldBottom = player.y + player.height; player.x = Math.max(0, Math.min(canvas.width - player.width, player.x + player.dx)); player.y += player.dy; player.dy += gravity; player.grounded = false;
-  platforms.forEach(p => { const bottom = player.y + player.height, inside = player.x < p.x + p.width && player.x + player.width > p.x; if (inside && oldBottom <= p.y && bottom >= p.y && player.dy >= 0) { player.y = p.y - player.height; player.dy = 0; player.jumping = false; player.grounded = true; player.standingPlatform = p; } });
-  if (player.y > canvas.height + 80) handleFall();
+
+function movePlayer() {
+  if ((keys.ArrowUp || keys[" "]) && player.grounded) {
+    player.dy = -jumpPower;
+    player.jumping = true;
+    player.grounded = false;
+  }
+  player.dx = keys.ArrowLeft && !keys.ArrowRight ? -moveSpeed : keys.ArrowRight && !keys.ArrowLeft ? moveSpeed : 0;
 }
+
+function updatePlayer() {
+  const oldBottom = player.y + player.height;
+  player.x = Math.max(0, Math.min(canvas.width - player.width, player.x + player.dx)); player.y += player.dy;
+  player.dy += gravity;
+  player.grounded = false;
+  platforms.forEach(p => { const bottom = player.y + player.height, inside = player.x < p.x + p.width && player.x + player.width > p.x; if (inside && oldBottom <= p.y && bottom >= p.y && player.dy >= 0) {
+    player.y = p.y - player.height;
+    player.dy = 0;
+    player.jumping = false;
+    player.grounded = true;
+    player.standingPlatform = p;} });
+  if (player.y > canvas.height + 80 && player.invulnerable <= 0) handleFall();
+}
+
 function gameLoop() { if (!isGameRunning || gamePaused) return; ctx.clearRect(0, 0, canvas.width, canvas.height); levelFrames++; movePlayer(); updatePlatforms(); updatePlayer(); updateEnemies(); updateCollections(); updateCheckpoint(); updateGoal(); drawPlatforms(); drawEnemies(); drawObstacle(); drawCoins(); drawExtras(); drawCheckpoint(); drawGoal(); drawPlayer(); drawHud(); frameId = requestAnimationFrame(gameLoop); }
 function startGame() { document.getElementById("start-screen").classList.add("hidden"); setupWorld(); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); }
 function restartGame() { score = 0; lives = 3; currentLevel = 0; setupWorld(); document.getElementById("game-over-screen").classList.add("hidden"); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); }
@@ -191,7 +209,22 @@ movePlayer = function () {
     jumpSound.play();
   }
 };
-function loseLife() { lives--; loseSound.currentTime = 0; loseSound.play(); if (lives <= 0) { isGameRunning = false; document.getElementById("game-over-message").innerText = "Game Over!"; document.getElementById("mainActionBtn").innerText = "Restart"; document.getElementById("game-over-screen").classList.remove("hidden"); saveHighScore(); return; } resetPlayer(); player.invulnerable = 90; showStatus("Lives left: " + lives); }
+
+function loseLife() {
+  lives--; loseSound.currentTime = 0;
+  loseSound.play();
+  if (lives <= 0) {
+    isGameRunning = false;
+    document.getElementById("game-over-message").innerText = "Game Over!";
+    document.getElementById("mainActionBtn").innerText = "Restart";
+    document.getElementById("game-over-screen").classList.remove("hidden");
+    saveHighScore();
+    return;
+  }
+  resetPlayer(); player.invulnerable = 90;
+  showStatus("Lives left: " + lives);
+}
+
 const P = (x, y, width, height = 20, extra = {}) => ({ x, y, width, height, ...extra });
 const C = (x, y) => ({ x, y, width: 20, height: 20 });
 const G = (x, y, color) => ({ x, y, width: 22, height: 22, color });
@@ -381,7 +414,7 @@ updateGoal = () => {
   finishLevel();
 };
 
-function bindHoldButton(id, onDown, onUp){
+function bindHoldButton(id, onDown, onUp) {
   const btn = document.getElementById(id);
   const press = event => {
     event.preventDefault();
@@ -548,7 +581,6 @@ gameLoop = () => {
   updateGoal();
   drawPlatforms();
   drawEnemies();
-  drawObstacle(), drawCoins();
   drawCoins();
   drawExtras();
   drawHazards();
@@ -564,7 +596,7 @@ levels[0].hazards = [{ x: 600, y: 350, width: 30, height: 50, type: "cactus" }];
 levels[1].hazards = [{ x: 240, y: 390, width: 40, height: 110, type: "water" }, { x: 690, y: 210, width: 30, height: 40, type: "cactus" }];
 levels[2].hazards = [{ x: 180, y: 390, width: 50, height: 110, type: "water" }, { x: 650, y: 305, width: 30, height: 50, type: "cactus" }];
 levels[3].hazards = [{ x: 190, y: 390, width: 40, height: 110, type: "water" }, { x: 710, y: 210, width: 30, height: 50, type: "cactus" }];
-levels[4].hazards = [{ x: 190, y: 390, width: 45, height: 110, type: "water" }, { x: 690, y: 300, width: 30, height: 50, type: "cactus" }];
+levels[4].hazards = [{ x: 480, y: 390, width: 45, height: 110, type: "water" }, { x: 690, y: 300, width: 30, height: 50, type: "cactus" }];
 
 const loadLevelBeforeHazards = loadLevel;
 loadLevel = index => {
@@ -788,7 +820,7 @@ drawGoal = () => {
     ctx.fillStyle = "black";
     ctx.font = "15px Arial";
     const goalLabel = currentLevel === levels.length - 1 && boss && !boss.defeated ? "boss" : "key";
-    ctx.fillText("key", goal.x - 1, goal.y - 7);
+    ctx.fillText(goalLabel, goal.x - 1, goal.y - 7);
   }
 };
 
@@ -891,7 +923,7 @@ updatePlayer = () => {
   updatePlayerBeforePlatformFix();
 };
 
-function resetInput(){
+function resetInput() {
   keys.ArrowLeft = false;
   keys.ArrowRight = false;
   keys.ArrowUp = false;
@@ -901,18 +933,18 @@ function resetInput(){
 }
 
 window.addEventListener("blur", resetInput);
-function releaseControlsIfNeeded(event){
+function releaseControlsIfNeeded(event) {
   const target = event.target;
-  if(!target || !target.closest){
+  if (!target || !target.closest) {
     resetInput();
     return;
   }
-  if(!target.closest(".mobile-controls")){
+  if (!target.closest(".mobile-controls")) {
     resetInput();
   }
 }
-function resetInputWhenHidden(){
-  if(document.hidden){
+function resetInputWhenHidden() {
+  if (document.hidden) {
     resetInput();
   }
 }
@@ -920,42 +952,42 @@ function resetInputWhenHidden(){
 const bossImage = image("enemies/blockerMad.png");
 const bossHurtImage = image("enemies/blockerSad.png");
 let boss = null;
-function createBoss(){
-  boss = { x: 790, y: 232, width: 56, height: 56, dx: -1.6, minX: 620, maxY: 955, hp: 4, maxHP: 4, hurtFrames: 0, defeated: false };
+function createBoss() {
+  boss = { x: 790, y: 232, width: 56, height: 56, dx: -1.6, minX: 620, maxX: 955, hp: 4, maxHP: 4, hurtFrames: 0, defeated: false };
 }
 
-function damageBoss(){
-  if(!boss || boss.defeated || boss.hurtFrames > 0) return;
+function damageBoss() {
+  if (!boss || boss.defeated || boss.hurtFrames > 0) return;
   boss.hp--;
   boss.hurtFrames = 35;
   player.dy = -8;
   spawnParticles(boss.x + boss.width / 2, boss.y + boss.height / 2, "enemy", 12);
-  if(boss.hp <= 0){
+  if (boss.hp <= 0) {
     boss.defeated = true;
     score += 100;
     showStatus("boss defeated");
   }
 }
 
-function updateBoss(){
-  if(!boss || boss.defeated) return;
-  if(boss.hurtFrames > 0) boss.hurtFrames--;
+function updateBoss() {
+  if (!boss || boss.defeated) return;
+  if (boss.hurtFrames > 0) boss.hurtFrames--;
   const distance = player.x - boss.x;
-  if(Math.abs(distance) < 230) boss.dx = distance < 0 ? -2.1 : 2.1;
+  if (Math.abs(distance) < 230) boss.dx = distance < 0 ? -2.1 : 2.1;
   boss.x += boss.dx * difficultySettings[difficulty].enemySpeed;
-  if(boss.x < boss.minX || boss.x + boss.width > boss.maxX){
+  if (boss.x < boss.minX || boss.x + boss.width > boss.maxX) {
     boss.dx *= -1;
     boss.x = Math.max(boss.minX, Math.min(boss.maxX - boss.width, boss.x));
   }
-  if(!touches(boss) || player.invulnerable > 0 || boss.hurtFrames > 0) return;
+  if (!touches(boss) || player.invulnerable > 0 || boss.hurtFrames > 0) return;
   const playerBottom = player.y + player.height;
-  if(player.dy > 1 && playerBottom < boss.y + boss.height * 0.7) damageBoss();
+  if (player.dy > 1 && playerBottom < boss.y + boss.height * 0.7) damageBoss();
   else hurtPlayer(boss);
 }
 
-function drawBoss(){
-  if(!boss || boss.defeated) return
-  const picture = boss.hurtFrame > 0 ? bossHurtImage : bossImage;
+function drawBoss() {
+  if (!boss || boss.defeated) return
+  const picture = boss.hurtFrames > 0 ? bossHurtImage : bossImage;
   ctx.drawImage(picture, boss.x, boss.y, boss.width, boss.height);
   ctx.fillStyle = "black";
   ctx.fillRect(canvas.width / 2 - 80, 12, 160, 8);
@@ -966,15 +998,21 @@ function drawBoss(){
 const loadLevelBeforeBoss = loadLevel;
 loadLevel = index => {
   loadLevelBeforeBoss(index);
-  if(index === levels.length - 1) createBoss();
+  if (index === levels.length - 1) createBoss();
   else boss = null;
 };
 
 const updateEnemiesBeforeBoss = updateEnemies;
 updateEnemies = () => {
   updateEnemiesBeforeBoss();
-  drawBoss();
+  updateBoss();
 };
+
+const drawEnemiesBeforeBoss = drawEnemies;
+drawEnemies = () => {
+  drawEnemiesBeforeBoss();
+  drawBoss();
+}
 
 const goalIsLockedBeforeBoss = goalIsLocked;
 goalIsLocked = () => goalIsLockedBeforeBoss() || !!(currentLevel === levels.length - 1 && boss && !boss.defeated);
