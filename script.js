@@ -96,7 +96,12 @@ function startGame() { document.getElementById("start-screen").classList.add("hi
 function restartGame() { score = 0; lives = 3; currentLevel = 0; setupWorld(); document.getElementById("game-over-screen").classList.add("hidden"); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); }
 function mainAction() { restartGame(); }
 function exitGame() { window.close(); }
-document.addEventListener("keydown", e => { if (["ArrowLeft", "ArrowRight", "ArrowUp", " "].includes(e.key)) e.preventDefault(); keys[e.key] = true; });
+document.addEventListener("keydown", e => {
+  if (["ArrowLeft", "ArrowRight", "ArrowUp", " "].includes(e.key)) {
+    e.preventDefault();
+  }
+  keys[e.key] = true;
+});
 document.addEventListener("keyup", e => { keys[e.key] = false; });
 const coinSound = document.getElementById("coinSound");
 const jumpSound = document.getElementById("jumpSound");
@@ -130,11 +135,20 @@ drawGoal = () => {
   ctx.drawImage(flagImage, goal.x, goal.y, goal.width, goal.height);
 };
 updateCollections = () => coins.forEach(c => {
-  if (!c.collected && touches(c)) { c.collected = true; score += 10; coinSound.currentTime = 0; coinSound.play(); }
+  if (!c.collected && touches(c)) {
+    c.collected = true;
+    score += 10;
+    coinSound.currentTime = 0;
+    coinSound.play();
+  }
 });
 updateGoal = () => {
   if (!touches(goal)) return;
-  isGameRunning = false; score += 25; saveHighScore(); winSound.currentTime = 0; winSound.play();
+  isGameRunning = false;
+  score += 25;
+  saveHighScore();
+  winSound.currentTime = 0;
+  winSound.play();
   document.getElementById("game-over-message").innerText = "You Win!";
   document.getElementById("mainActionBtn").innerText = "Restart";
   document.getElementById("game-over-screen").classList.remove("hidden");
@@ -144,12 +158,24 @@ drawHud = () => {
   ctx.fillText("Score: " + score, 10, 20);
   ctx.fillText("High Score: " + highScore, 10, 40);
   ctx.fillText("Coins: " + collectedCoinCount() + "/" + coins.length, 10, 60);
-  if (statusFrames > 0) { ctx.font = "18px Arial"; ctx.textAlign = "center"; ctx.fillText(statusText, canvas.width / 2, 35); ctx.textAlign = "left"; statusFrames--; }
+  if (statusFrames > 0) {
+    ctx.font = "18px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(statusText, canvas.width / 2, 35);
+    ctx.textAlign = "left";
+    statusFrames--;
+  }
 };
 const oldMovePlayer = movePlayer;
 movePlayer = function () {
   const wasGrounded = player.grounded; oldMovePlayer();
   if ((keys.ArrowUp || keys[" "]) && wasGrounded && player.dy < 0) { jumpSound.currentTime = 0; jumpSound.play(); }
+  const wasGrounded = player.grounded;
+  oldMovePlayer();
+  if ((keys.ArrowUp || keys[" "]) && wasGrounded && player.dy < 0) {
+    jumpSound.currentTime = 0;
+    jumpSound.play();
+  }
 };
 function loseLife() { lives--; loseSound.currentTime = 0; loseSound.play(); if (lives <= 0) { isGameRunning = false; document.getElementById("game-over-message").innerText = "Game Over!"; document.getElementById("mainActionBtn").innerText = "Restart"; document.getElementById("game-over-screen").classList.remove("hidden"); saveHighScore(); return; } resetPlayer(); player.invulnerable = 90; showStatus("Lives left: " + lives); }
 const P = (x, y, width, height = 20, extra = {}) => ({ x, y, width, height, ...extra });
@@ -184,7 +210,9 @@ function loadLevel(index) {
   gems = copyItems(level.gems || [], "collected");
   levelKey = level.key ? { ...level.key, collected: false } : null;
   goal = { ...level.goal };
-  player.spawnX = level.start.x; player.spawnY = level.start.y; resetPlayer();
+  player.spawnX = level.start.x;
+  player.spawnY = level.start.y;
+  resetPlayer();
 }
 function currentLevelName() { return levels[currentLevel] ? levels[currentLevel].name : ""; }
 setupWorld = () => loadLevel(currentLevel);
@@ -694,3 +722,114 @@ finishlevel = () => {
   renderLevelSelect();
 }
 renderLevelSelect();
+drawGoal = () => {
+  ctx.save();
+  ctx.globalAlpha = goalIsLocked() ? 0.45 : 1;
+  ctx.drawImage(flagImage, goal.x, goal.y, goal.width, goal.height);
+  ctx.restore();
+  if (goalIsLocked()) {
+    ctx.fillStyle = "black";
+    ctx.font = "15px Arial";
+    ctx.fillText("key", goal.x - 1, goal.y - 7);
+  }
+  if (lockedGoalNotice > 0) lockedGoalNotice--;
+};
+
+const redMushroomImage = image("collection/mushroomRed.png"), brownMushroomImage = image("collection/mushroomBrown.png");
+let powerUps = [], powerUpType = "", powerUpFrames = 0;
+function clearPowerUp() { powerUpType = ""; powerUpFrames = 0; }
+
+function applyPowerUp(type) {
+  powerUpType = type; powerUpFrames = 600;
+  showStatus(type === "red" ? "speed boost" : "jump boost");
+}
+
+function currentMoveSpeed() { return moveSpeed + (powerUpType === "red" && powerUpFrames > 0 ? 2 : 0); }
+
+function currentJumpPower() { return jumpPower + (powerUpType === "brown" && powerUpFrames > 0 ? 3 : 0); }
+
+levels[0].powerUps = [{ x: 725, y: 165, width: 28, height: 28, type: "red" }];
+levels[1].powerUps = [{ x: 530, y: 260, width: 28, height: 28, type: "brown" }];
+levels[2].powerUps = [{ x: 775, y: 270, width: 28, height: 28, type: "red" }];
+levels[3].powerUps = [{ x: 470, y: 260, width: 28, height: 28, type: "brown" }];
+levels[4].powerUps = [{ x: 845, y: 245, width: 28, height: 28, type: "red" }];
+
+const loadLevelBeforePowerUps = loadLevel;
+loadLevel = index => {
+  loadLevelBeforePowerUps(index);
+  powerUps = (levels[index].powerUps || []).map(item => ({ ...item, collected: false }));
+  clearPowerUp();
+};
+
+const updateCollectionsBeforePowerUps = updateCollections;
+updateCollections = () => {
+  updateCollectionsBeforePowerUps();
+  powerUps.forEach(item => {
+    if (!item.collected && touches(item)) {
+      item.collected = true;
+      applyPowerUp(item.type);
+      coinSound.currentTime = 0;
+      coinSound.play();
+    }
+  });
+  if (powerUpFrames > 0) powerUpFrames--; else if (powerUpType) clearPowerUp();
+};
+
+const drawExtrasBeforePowerUps = drawExtras;
+drawExtras = () => {
+  drawExtrasBeforePowerUps();
+  powerUps.forEach(item => {
+    if (!item.collected) ctx.drawImage(item.type === "red" ? redMushroomImage : brownMushroomImage, item.x, item.y, item.width, item.height);
+  });
+};
+
+movePlayer = () => {
+  const jumpDown = !!(keys.ArrowUp || keys[" "]);
+  if (jumpDown && !jumpHeld) queueJump();
+  jumpHeld = jumpDown;
+  if (jumpBufferFrames > 0) jumpBufferFrames--;
+  if (jumpBufferFrames > 0 && (player.grounded || coyoteFrames > 0)) {
+    player.dy = -currentJumpPower();
+    player.jumping = true;
+    player.grounded = false;
+    coyoteFrames = 0;
+    jumpBufferFrames = 0;
+    jumpSound.currentTime = 0;
+    jumpSound.play();
+  }
+  const speed = currentMoveSpeed();
+  player.dx = keys.ArrowLeft && !keys.ArrowRight ? -speed : keys.ArrowRight && !keys.ArrowLeft ? speed : 0;
+};
+
+function carryPlayerWithPlatform(platform) {
+  const moveX = platform.x - platform.lastX;
+  const moveY = platform.y - platform.lastY;
+  player.x += moveX;
+  player.y += moveY;
+}
+
+updatePlatforms = () => platforms.forEach(platform => {
+  platform.lastX = platform.x;
+  platform.lastY = platform.y;
+  if (platform.dx !== undefined) {
+    platform.x += platform.dx;
+    if (platform.x < platform.minX || platform.x > platform.maxX) {
+      platform.dx *= -1;
+      platform.x = Math.max(platform.minX, Math.min(platform.maxX, platform.x));
+    }
+  }
+  if (platform.dy !== undefined) {
+    platform.y += platform.dy;
+    if (platform.y < platform.minY || platform.y > platform.maxY) {
+      platform.dy *= -1;
+      platform.y = Math.max(platform.minY, Math.min(platform.maxY, platform.y));
+    }
+  }
+  if (player.standingPlatform === platform) carryPlayerWithPlatform(platform);
+});
+
+const updatePlayerBeforePlatformFix = updatePlayer;
+updatePlayer = () => {
+  player.standingPlatform = null;
+  updatePlayerBeforePlatformFix();
+};
