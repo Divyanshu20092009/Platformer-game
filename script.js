@@ -168,10 +168,9 @@ drawHud = () => {
 };
 const oldMovePlayer = movePlayer;
 movePlayer = function () {
-  const wasGrounded = player.grounded; oldMovePlayer();
-  if ((keys.ArrowUp || keys[" "]) && wasGrounded && player.dy < 0) { jumpSound.currentTime = 0; jumpSound.play(); }
   const wasGrounded = player.grounded;
   oldMovePlayer();
+
   if ((keys.ArrowUp || keys[" "]) && wasGrounded && player.dy < 0) {
     jumpSound.currentTime = 0;
     jumpSound.play();
@@ -250,7 +249,9 @@ levels.push({
   key: { x: 725, y: 165, width: 24, height: 24 }, goal: P(70, 5, 30, 60)
 });
 function hasMoreLevels() { return currentLevel < levels.length - 1; }
+
 function levelPar() { return levels[currentLevel].par; }
+
 function finishLevel() {
   score += 25; const seconds = Math.floor(levelFrames / 60);
   if (seconds <= levelPar()) { score += 35; showStatus("Fast finish +35"); }
@@ -348,6 +349,23 @@ let playerFacing = 1;
 let playerState = "idle";
 let playerFrame = 0;
 let playerFrameTick = 0;
+let lockedGoalNotice = 0;
+
+function goalIsLocked() {
+  return !!(levelKey && !levelKey.collected);
+}
+
+updateGoal = () => {
+  if (!touches(goal)) return;
+  if (goalIsLocked()) {
+    if (lockedGoalNotice <= 0) {
+      showStatus("find the key first...")
+      lockedGoalNotice = 90;
+    }
+    return;
+  }
+  finishLevel();
+};
 
 function updatePlayerAnimation() {
   if (player.invulnerable > 65) playerState = "hurt";
@@ -590,7 +608,7 @@ function setPaused(value) {
 }
 
 function restartCurrentLevel() {
-  document.getElementById("paused-screen").classList.add("hidden");
+  document.getElementById("pause-screen").classList.add("hidden");
   gamePaused = false;
   loadLevel(currentLevel);
   isGameRunning = true;
@@ -650,11 +668,18 @@ startGame = () => {
 };
 let unlockedLevel = Number(localStorage.getItem("platformerUnlockedLevel")) || 0;
 
-function unlockedLevel(index) {
+function unlockLevel(index) {
   const safeIndex = Math.min(index, levels.length - 1);
   if (safeIndex <= unlockedLevel) return;
   unlockedLevel = safeIndex;
-  localStorage.setItem("platfromUnlockedLevel", unlockedLevel);
+  localStorage.setItem("platformerUnlockedLevel", unlockedLevel);
+  renderLevelSelect();
+}
+
+function chooseLevel(index) {
+  if (index < 0 || index >= levels.length) return;
+  if (index > unlockedLevel) return;
+  currentLevel = index;
   renderLevelSelect();
 }
 function renderLevelSelect() {
@@ -674,38 +699,39 @@ function renderLevelSelect() {
 const finishLevelBeforeUnlock = finishLevel;
 finishLevel = () => {
   if (currentLevel < levels.length - 1) {
-    unlockedLevel(currentLevel + 1);
+    unlockLevel(currentLevel + 1);
   }
   finishLevelBeforeUnlock();
 };
 renderLevelSelect();
 
 let bestTimes = {};
-try{
+try {
   const savedTimes = localStorage.getItem("platformerBestTimes");
   const savedJson = savedTimes || "{}";
   bestTimes = JSON.parse(savedJson);
-} catch (error){
+} catch (error) {
   bestTimes = {};
 }
 
-function recordBestTime(levelIndex, frames){
+function recordBestTime(levelIndex, frames) {
   const oldTime = bestTimes[levelIndex];
-  if(oldTime !== undefined && oldTime <= frames) return;
+  if (oldTime !== undefined && oldTime <= frames) return;
   bestTimes[levelIndex] = frames;
-  localStorage.setItem("platformBestTimes", JSON.stringify(bestTimes));
+  localStorage.setItem("platformerBestTimes", JSON.stringify(bestTimes));
 }
 
-function bestTimeLabel(index){
-  if(bestTimes[index] === undefined) return "";
+function bestTimeLabel(index) {
+  if (bestTimes[index] === undefined) return "";
   return " " + formatTime(bestTimes[index]);
 }
 
-renderLevelSelect = () =>{
+renderLevelSelect = () => {
   const holder = document.getElementById("level-select");
   let html = "";
   levels.forEach((level, index) => {
-    const locked = index === currentLevel ? "*" : "";
+    const locked = index > unlockedLevel;
+    const selected = index === currentLevel ? "*" : "";
     const best = bestTimeLabel(index);
     const disabled = locked ? 'disabled' : '';
     const action = 'onclick="chooseLevel(' + index + ')"';
@@ -716,12 +742,13 @@ renderLevelSelect = () =>{
 };
 
 const finishLevelBeforeBestTime = finishLevel;
-finishlevel = () => {
-  recordBestTime(currentLevel,levelFrames);
+finishLevel = () => {
+  recordBestTime(currentLevel, levelFrames);
   finishLevelBeforeBestTime();
   renderLevelSelect();
 }
 renderLevelSelect();
+
 drawGoal = () => {
   ctx.save();
   ctx.globalAlpha = goalIsLocked() ? 0.45 : 1;
@@ -732,7 +759,6 @@ drawGoal = () => {
     ctx.font = "15px Arial";
     ctx.fillText("key", goal.x - 1, goal.y - 7);
   }
-  if (lockedGoalNotice > 0) lockedGoalNotice--;
 };
 
 const redMushroomImage = image("collection/mushroomRed.png"), brownMushroomImage = image("collection/mushroomBrown.png");
