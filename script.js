@@ -6,23 +6,6 @@ const jumpPower = 10;
 const image = src => {
   const img = new Image();
   img.src = src;
-<<<<<<< HEAD
-=======
-  img.onerror = () => console.warn("Missing the image assets", src);
-  
-  const rawDrawImage = ctx.drawImage.bind(ctx);
-ctx.drawImage = (img, ...rest) => {
-  if (!img || !img.complete || img.naturalWidth === 0) return;
-  rawDrawImage(img, ...rest);
-};
-
-const image = src => {
-  const img = new Image();
-  img.src = src;
-  img.onerror = () => console.warn("Missing image asset:", src);
-  return img;
-};
->>>>>>> 3a94322 (fixed typos)
   return img;
 };
 
@@ -30,7 +13,7 @@ const playerImage = image("p/p1_walk01.png");
 const platformImage = image("item/grassHalfMid.png");
 const enemyImage = image("enemies/fishSwim1.png");
 const slimeImage = image("enemies/slimeWalk1.png");
-const snailImage = image("enemies/snailWalk1.png");
+const snailImage = image("enemies/snailWalk1.png")
 const flyImage = image("enemies/flyFly1.png");
 const gemImages = { blue: image("collection/gemBlue.png"), green: image("collection/gemGreen.png"), red: image("collection/gemRed.png"), yellow: image("collection/gemYellow.png") };
 const keyImage = image("collection/keyYellow.png");
@@ -147,50 +130,8 @@ function restartGame() {
   cancelAnimationFrame(frameId);
   gameLoop();
 }
-<<<<<<< HEAD
 function mainAction() { restartGame(); }
 function exitGame() { window.close(); }
-=======
-
-function gameLoop() {
-  if (!isGameRunning || gamePaused) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  levelFrames++;
-  movePlayer();
-  updatePlatforms();
-  updatePlayer();
-  updateEnemies();
-  updateCollections();
-  updateCheckpoint();
-  updateGoal();
-  drawPlatforms();
-  drawEnemies();
-  drawCoins();
-  drawExtras();
-  drawCheckpoint();
-  drawGoal();
-  drawPlayer();
-  drawHud();
-  frameId = requestAnimationFrame(gameLoop);
-}
-
-function startGame() { document.getElementById("start-screen").classList.add("hidden"); setupWorld(); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); }
-function restartGame() { score = 0; lives = 3; currentLevel = 0; setupWorld(); document.getElementById("game-over-screen").classList.add("hidden"); isGameRunning = true; cancelAnimationFrame(frameId); gameLoop(); }
-function mainAction() { restartGame(); }
-
-function exitGame() {
-  window.close();
-  setTimeout(() => {
-    isGameRunning = false;
-    cancelAnimationFrame(frameId);
-    document.getElementById("game-over-screen").classList.add("hidden");
-    document.getElementById("pause-screen").classList.add("hidden");
-    document.getElementById("start-screen").classList.remove("hidden");
-    ctx.fillText("Thanks for playing the GAME - close the tab to EXIT", canvas.width / 2, canvas.height / 2);
-  }, 150);
-};
-
->>>>>>> 3a94322 (fixed typos)
 document.addEventListener("keydown", e => {
   if (["ArrowLeft", "ArrowRight", "ArrowUp", " "].includes(e.key)) {
     e.preventDefault();
@@ -276,7 +217,6 @@ drawHud = () => {
     statusFrames--;
   }
 };
-<<<<<<< HEAD
 const oldMovePlayer = movePlayer;
 movePlayer = function () {
   const wasGrounded = player.grounded;
@@ -289,12 +229,6 @@ movePlayer = function () {
 function loseLife() {
   lives--;
   loseSound.currentTime = 0;
-=======
-
-function loseLife() {
-  if(!isGameRunning) return;
-  lives--; loseSound.currentTime = 0;
->>>>>>> 3a94322 (fixed typos)
   loseSound.play();
   if (lives <= 0) {
     isGameRunning = false;
@@ -369,21 +303,6 @@ restartGame = function () {
   cancelAnimationFrame(frameId);
   gameLoop();
 };
-<<<<<<< HEAD
-=======
-restartGame = function () {
-  score = 0;
-  lives = startingLives();
-  gamePaused = false;
-  document.getElementById("pause-screen").classList.add("hidden");
-  loadLevel(0);
-  document.getElementById("game-over-screen").classList.add("hidden");
-  isGameRunning = true;
-  cancelAnimationFrame(frameId);
-  gameLoop();
-};
-
->>>>>>> 3a94322 (fixed typos)
 levels.push({
   name: "Broken Bridge", par: 50, start: { x: 40, y: 320 },
   platforms: [P(0, 400, 180), P(230, 360, 120), P(400, 315, 130), P(590, 355, 110), P(760, 300, 190), P(610, 210, 120), P(410, 165, 120), P(210, 115, 130)],
@@ -432,19 +351,12 @@ function finishLevel() {
   document.getElementById("mainActionBtn").innerText = more ? "Next Level" : "Play Again";
   document.getElementById("game-over-screen").classList.remove("hidden");
 }
-<<<<<<< HEAD
 updateGoal = () => {
   if (levelKey && !levelKey.collected) return;
   if (touches(goal)) finishLevel();
 };
 mainAction = function () {
   if (currentLevel < levels.length - 1 && !isGameRunning) {
-=======
-updateGoal = () => { if (levelKey && !levelKey.collected) return; if (touches(goal)) finishLevel(); };
-
-mainAction = function () {
-  if (lives > 0 && currentLevel < levels.length - 1 && !isGameRunning) {
->>>>>>> 3a94322 (fixed typos)
     document.getElementById("game-over-screen").classList.add("hidden");
     loadLevel(currentLevel + 1);
     isGameRunning = true;
@@ -558,51 +470,6 @@ document.addEventListener("keydown", e => {
   }
 });
 
-<<<<<<< HEAD
-=======
-// function bindHoldButton(id, onDown, onUp) {
-//   const btn = document.getElementById(id);
-//   const press = e => { e.preventDefault(); onDown(); };
-//   const release = e => { e.preventDefault(); onUp(); };
-//   btn.addEventListener("touchstart", press);
-//   btn.addEventListener("touchend", release);
-//   btn.addEventListener("mousedown", press);
-//   btn.addEventListener("mouseup", release);
-//   btn.addEventListener("mouseleave", release);
-// }
-bindHoldButton("leftBtn", () => keys["ArrowLeft"] = true, () => keys["ArrowLeft"] = false);
-bindHoldButton("rightBtn", () => keys["ArrowRight"] = true, () => keys["ArrowRight"] = false);
-bindHoldButton("jumpBtn", () => keys[" "] = true, () => keys[" "] = false);
-const walkFrames = [
-  image("p/p1_walk01.png"), image("p/p1_walk02.png"), image("p/p1_walk03.png"), image("p/p1_walk04.png"),
-  image("p/p1_walk05.png"), image("p/p1_walk06.png"), image("p/p1_walk07.png"), image("p/p1_walk08.png")
-];
-const jumpFrame = image("p/p1_jump.png");
-const hurtFrame = image("p/p1_hurt.png");
-let playerFacing = 1;
-let playerState = "idle";
-let playerFrame = 0;
-let playerFrameTick = 0;
-let lockedGoalNotice = 0;
-
-function goalIsLocked() {
-  return !!(levelKey && !levelKey.collected);
-}
-
-updateGoal = () => {
-  if(lockedGoalNotice > 0) lockedGoalNotice--;
-  if (!touches(goal)) return;
-  if (goalIsLocked()) {
-    if (lockedGoalNotice <= 0) {
-      showStatus("find the key first...")
-      lockedGoalNotice = 90;
-    }
-    return;
-  }
-  finishLevel();
-};
-
->>>>>>> 3a94322 (fixed typos)
 function bindHoldButton(id, onDown, onUp) {
   const btn = document.getElementById(id);
   const press = event => {
@@ -673,18 +540,18 @@ function queueJump() {
   jumpBufferFrames = 8;
 }
 
-// function useBufferedJump() {
-//   if (jumpBufferFrames <= 0) return false;
-//   if (!player.grounded && coyoteFrames <= 0) return false;
-//   player.dy = -jumpPower;
-//   player.jumping = true;
-//   player.grounded = false;
-//   coyoteFrames = 0;
-//   jumpBufferFrames = 0;
-//   jumpSound.currentTime = 0;
-//   jumpSound.play();
-//   return true;
-// }
+function useBufferedJump() {
+  if (jumpBufferFrames <= 0) return false;
+  if (!player.grounded && coyoteFrames <= 0) return false;
+  player.dy = -jumpPower;
+  player.jumping = true;
+  player.grounded = false;
+  coyoteFrames = 0;
+  jumpBufferFrames = 0;
+  jumpSound.currentTime = 0;
+  jumpSound.play();
+  return true;
+}
 
 movePlayer = () => {
   const jumpDown = !!(keys.ArrowUp || keys[" "]);
@@ -852,101 +719,6 @@ updateGoal = () => {
   }
   finishLevel();
 };
-<<<<<<< HEAD
-=======
-startGame = () => {
-  document.getElementById("start-screen").classList.add("hidden");
-  document.getElementById("pause-screen").classList.add("hidden");
-  gamePaused = false;
-  lives = startingLives();
-  loadLevel(currentLevel);
-  isGameRunning = true;
-  cancelAnimationFrame(frameId);
-  gameLoop();
-};
-let unlockedLevel = Number(localStorage.getItem("platformerUnlockedLevel")) || 0;
-
-function unlockLevel(index) {
-  const safeIndex = Math.min(index, levels.length - 1);
-  if (safeIndex <= unlockedLevel) return;
-  unlockedLevel = safeIndex;
-  localStorage.setItem("platformerUnlockedLevel", unlockedLevel);
-  renderLevelSelect();
-}
-
-function chooseLevel(index) {
-  if (index < 0 || index >= levels.length) return;
-  if (index > unlockedLevel) return;
-  currentLevel = index;
-  renderLevelSelect();
-}
-function renderLevelSelect() {
-  const holder = document.getElementById("level-select");
-  let html = "";
-  levels.forEach((level, index) => {
-    const locked = index > unlockedLevel;
-    const selected = index === currentLevel ? "*" : "";
-    const disabled = locked ? 'disabled ' : '';
-    const action = 'onclick="chooseLevel(' + index + ')"';
-    const label = selected + (index + 1);
-    html += '<button ' + disabled + action + '>' + label + '</button>';
-  });
-  holder.innerHTML = html;
-}
-
-const finishLevelBeforeUnlock = finishLevel;
-finishLevel = () => {
-  if (currentLevel < levels.length - 1) {
-    unlockLevel(currentLevel + 1);
-  }
-  finishLevelBeforeUnlock();
-};
-renderLevelSelect();
-
-let bestTimes = {};
-try {
-  const savedTimes = localStorage.getItem("platformerBestTimes");
-  const savedJson = savedTimes || "{}";
-  bestTimes = JSON.parse(savedJson);
-} catch (error) {
-  bestTimes = {};
-}
-
-function recordBestTime(levelIndex, frames) {
-  const oldTime = bestTimes[levelIndex];
-  if (oldTime !== undefined && oldTime <= frames) return;
-  bestTimes[levelIndex] = frames;
-  localStorage.setItem("platformerBestTimes", JSON.stringify(bestTimes));
-}
-
-function bestTimeLabel(index) {
-  if (bestTimes[index] === undefined) return "";
-  return " " + formatTime(bestTimes[index]);
-}
-
-renderLevelSelect = () => {
-  const holder = document.getElementById("level-select");
-  let html = "";
-  levels.forEach((level, index) => {
-    const locked = index > unlockedLevel;
-    const selected = index === currentLevel ? "*" : "";
-    const best = bestTimeLabel(index);
-    const disabled = locked ? 'disabled ' : '';
-    const action = 'onclick="chooseLevel(' + index + ')"';
-    const label = selected + (index + 1) + (best ? " (" + best.trim() + ")" : "");
-    html += '<button ' + disabled + action + '>' + label + '</button>';
-  });
-  holder.innerHTML = html;
-};
-
-const finishLevelBeforeBestTime = finishLevel;
-finishLevel = () => {
-  recordBestTime(currentLevel, levelFrames);
-  finishLevelBeforeBestTime();
-  renderLevelSelect();
-}
-renderLevelSelect();
->>>>>>> 3a94322 (fixed typos)
 
 drawGoal = () => {
   ctx.save();
@@ -1483,8 +1255,6 @@ function createBoss() {
   };
 }
 
-function spawnParticles(x, y, type, count){}
-
 function damageBoss() {
   if (!boss || boss.defeated || boss.hurtFrames > 0) return;
   boss.hp--;
@@ -1601,3 +1371,60 @@ drawEnemies = () => {
 
 const goalIsLockedBeforeBoss = goalIsLocked;
 goalIsLocked = () => goalIsLockedBeforeBoss() || !!(currentLevel === levels.length - 1 && boss && !boss.defeated);
+
+let stompCombo = 0;
+let stompComboFrames = 0;
+
+function resetStompCombo() {
+  stompCombo = 0;
+  stompComboFrames = 0;
+}
+
+function continueStompCombo(x, y) {
+  stompCombo = Math.min(stompCombo + 1, 4);
+  stompComboFrames = 180;
+  player.dy = -8 - stompCombo * 0.45;
+  if (stompCombo < 2) return;
+  const bonus = (stompCombo - 1) * 5;
+  score += bonus;
+  showStatus(stompCombo + "x stomp combo +" + bonus);
+  spawnParticles(x, y, "coin", stompCombo + 4);
+}
+
+const defeatEnemyBeforeCombo = defeatEnemy;
+defeatEnemy = enemy => {
+  const wasDefeated = enemy.defeated;
+  defeatEnemyBeforeCombo(enemy);
+  if (!wasDefeated && enemy.defeated) {
+    continueStompCombo(enemy.x + enemy.width / 2, enemy.y);
+  }
+};
+
+const damageBossBeforeCombo = damageBoss;
+damageBoss = () => {
+  const oldHealth = boss ? boss.hp : 0;
+  damageBossBeforeCombo();
+  if (boss && boss.hp < oldHealth) {
+    continueStompCombo(boss.x + boss.width / 2, boss.y);
+  }
+};
+
+const hurtPlayerBeforeCombo = hurtPlayer;
+hurtPlayer = enemy => {
+  const couldBeHurt = player.invulnerable <= 0;
+  hurtPlayerBeforeCombo(enemy);
+  if (couldBeHurt) resetStompCombo();
+};
+
+const loadLevelBeforeCombo = loadLevel;
+loadLevel = index => {
+  resetStompCombo();
+  loadLevelBeforeCombo(index);
+};
+
+const updateEnemiesBeforeCombo = updateEnemies;
+updateEnemies = () => {
+  if (stompComboFrames > 0) stompComboFrames--;
+  else if (stompCombo > 0) resetStompCombo();
+  updateEnemiesBeforeCombo();
+};
